@@ -1,37 +1,24 @@
 # QuietSafari
 
-An ad blocker for Safari on Mac. Download the app, or build it yourself in Xcode with a free Personal Team.
+An ad blocker for Safari on Mac. Build it in Xcode with a free Apple ID. There is no prebuilt app: Safari rejects an ad-hoc signature and reports each extension as no longer valid.
 
-## Install without Xcode
+## Install
 
-macOS 14 or later. No paid Apple Developer account: the release is ad-hoc signed, so Safari treats the extensions as unsigned.
+macOS 14 or later. Xcode from the App Store. A normal Apple ID is enough. The paid developer program is not required.
 
-**Site.** After this repository is public and GitHub Pages is enabled, the page is https://rubpf.github.io/QuietSafari/
+The project zip is https://github.com/rubpf/QuietSafari/archive/refs/heads/main.zip (the `main` branch). The site is https://rubpf.github.io/QuietSafari/ after the repository is public and GitHub Pages is enabled.
 
-**Zip.** On the releases page, download `QuietSafari.zip` or `QuietSafari.dmg`. SHA256 sums are in `SHA256SUMS.txt` next to them.
+1. Install Xcode from the App Store.
+2. Unzip the download and open `QuietSafari.xcodeproj`.
+3. Set your Personal Team (free Apple ID) on all five targets, with Automatically manage signing: QuietSafari, QuietSafariExtension, QuietSafariContentBlocker, QuietSafariPrivacy, QuietSafariRussian. The team must match on all five.
+4. Press Run.
+5. Safari → Settings → Advanced → Show features for web developers.
+6. Develop → Allow Unsigned Extensions.
+7. Tick the four extensions: QuietSafari, Content Blocker, Privacy, and Russian. Allow QuietSafari on every website.
 
-macOS may quarantine the file. Clear that once:
+Allow Unsigned Extensions turns off every time Safari quits. Turn it on again. A free signing profile also expires after about seven days: press Run again.
 
-```bash
-xattr -dr com.apple.quarantine /path/to/QuietSafari.app
-```
-
-If macOS says the app is damaged: System Settings → Privacy & Security → Open Anyway.
-
-**Homebrew.** The cask is in `homebrew-tap/`. Copy it into a public `rubpf/homebrew-tap` repository (see `homebrew-tap/README.md`). Then:
-
-```bash
-brew tap rubpf/tap
-brew install --cask --no-quarantine rubpf/tap/quietsafari
-```
-
-`--no-quarantine` is the same step as `xattr` above.
-
-The first launch walks through setup. Short version: Safari → Settings → Advanced → Show features for web developers, Develop → Allow Unsigned Extensions, then four checkboxes: QuietSafari, Content Blocker, Privacy, and Russian. A button in the app opens Safari’s extension settings.
-
-Quitting Safari turns Allow Unsigned Extensions off. The QuietSafari menu then says “Safari reset the permission. Turn it on again.”
-
-The Xcode steps below are only if you want to change the project.
+The sections below are the same path with the checks and the fixes.
 
 ## Build it in Xcode
 

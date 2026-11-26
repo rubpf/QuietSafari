@@ -1,5 +1,7 @@
 # rubpf/homebrew-tap
 
+Experimental, and not part of the install. Safari rejects the ad-hoc app, so this cask is not linked from the site or the README. Do not publish it.
+
 This folder is the cask to copy into a public repository named `homebrew-tap` under the GitHub user `rubpf`. Homebrew then serves it as `rubpf/tap`.
 
 ## One-time setup

@@ -109,6 +109,17 @@ h1 {
   border: 1px solid var(--line);
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--sage);
+  color: #1c241c;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .hero-icon {
   width: min(220px, 70%);
   height: auto;

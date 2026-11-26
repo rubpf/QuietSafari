@@ -1,3 +1,4 @@
+# Experimental. Not linked from the site or the README. Safari rejects this ad-hoc app.
 cask "quietsafari" do
   version "0.3.0"
   # Replace :no_check with the QuietSafari.zip digest from SHA256SUMS.txt

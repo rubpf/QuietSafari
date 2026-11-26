@@ -1,9 +1,10 @@
 name: release
 
+# Disabled. Safari rejects ad-hoc signatures ("is no longer valid") even with
+# Allow Unsigned Extensions. Install from the Xcode project with a free
+# Personal Team. The old trigger matched tags "v*". Do not turn this back on.
+
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -16,6 +17,7 @@ permissions:
 
 jobs:
   build:
+    if: false
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

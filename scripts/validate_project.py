@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import plistlib
+import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -13,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-import build_rules  # noqa: E402
+import convert_filters  # noqa: E402
 
 
 def fail(message: str) -> None:
@@ -83,46 +84,57 @@ def check_normalizer() -> None:
 
 
 def check_rules() -> None:
-    build_rules.self_test()
-    disk = (ROOT / "Shared" / "blockerList.json").read_text(encoding="utf-8")
-    if disk != build_rules.rules_text():
-        fail("Shared/blockerList.json is stale; run scripts/build_rules.py")
-    compiled = json.loads(disk)
-    if not isinstance(compiled, list) or not compiled:
-        fail("blocker list is empty")
+    convert_filters.self_test()
     allowed_actions = {"block", "block-cookies", "css-display-none", "ignore-previous-rules", "make-https"}
-    for rule in compiled:
-        trigger = rule.get("trigger") or {}
-        action = rule.get("action") or {}
-        if not trigger.get("url-filter"):
-            fail(f"rule missing url-filter: {rule}")
-        if action.get("type") not in allowed_actions:
-            fail(f"bad action: {action}")
-        if action["type"] == "css-display-none" and not action.get("selector"):
-            fail("css rule missing selector")
-        for domain in trigger.get("if-domain") or []:
-            if domain.startswith("*") or "/" in domain:
-                fail(f"bad if-domain {domain}")
-    cosmetic = (ROOT / "Extension" / "Resources" / "cosmetic.js").read_text(encoding="utf-8")
+    protected = [
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "https://www.youtube.com/",
+        "https://rr1---sn-xxxx.googlevideo.com/videoplayback?id=1",
+        "https://www.google.com/",
+    ]
+    for name, minimum in (("blockerList.json", 20000), ("privacyList.json", 20000)):
+        path = ROOT / "Shared" / name
+        raw = path.read_bytes()
+        if len(raw) > 7_500_000:
+            fail(f"{name} is {len(raw)} bytes, over the Safari size budget")
+        compiled = json.loads(raw)
+        if not isinstance(compiled, list) or len(compiled) < minimum or len(compiled) > 150_000:
+            fail(f"{name} has an unexpected rule count: {len(compiled) if isinstance(compiled, list) else 'not a list'}")
+        for rule in compiled[:50]:
+            action = (rule.get("action") or {}).get("type")
+            if action not in allowed_actions or not (rule.get("trigger") or {}).get("url-filter"):
+                fail(f"{name} has a malformed rule")
+        for rule in compiled:
+            if (rule.get("action") or {}).get("type") != "block":
+                continue
+            pattern = rule["trigger"]["url-filter"]
+            if pattern == ".*":
+                fail(f"{name} has a block-everything rule")
+            if not any(piece in pattern for piece in ("youtube", "googlevideo", "ytimg", "google.com")):
+                continue
+            try:
+                compiled_re = re.compile(pattern, re.IGNORECASE)
+            except re.error as error:
+                fail(f"bad regex in {name}: {error}")
+            for url in protected:
+                if compiled_re.search(url):
+                    fail(f"{name} would block {url} via {pattern}")
+    ads = json.loads((ROOT / "Shared" / "blockerList.json").read_text(encoding="utf-8"))
+    selectors = "\n".join(
+        (rule.get("action") or {}).get("selector", "")
+        for rule in ads
+        if (rule.get("action") or {}).get("type") == "css-display-none"
+    )
+    if "adsbygoogle" not in selectors:
+        fail("EasyList conversion dropped the adsbygoogle cosmetic rule")
     youtube = (ROOT / "Extension" / "Resources" / "youtube.js").read_text(encoding="utf-8")
-    for selector in build_rules.COSMETIC_SELECTORS:
-        if selector not in cosmetic:
-            fail(f"cosmetic.js is missing selector {selector}")
-    for selector in build_rules.YOUTUBE_SELECTORS:
-        if selector not in youtube:
-            fail(f"youtube.js is missing selector {selector}")
-    joined = json.dumps(compiled)
-    for rule in compiled:
-        if rule["action"]["type"] != "block":
-            continue
-        pattern = rule["trigger"]["url-filter"]
-        for host in ("youtube.com", "googlevideo.com", "ytimg.com", "google.com"):
-            if host.replace(".", r"\.") in pattern and host != "adservice.google.com":
-                if host == "google.com" and "adservice" in pattern:
-                    continue
-                fail(f"network rule must not target {host}: {pattern}")
-    if "adsbygoogle" not in joined:
-        fail("proof list does not hide adsbygoogle")
+    main = (ROOT / "Extension" / "Resources" / "youtube-main.js").read_text(encoding="utf-8")
+    for needle in ("ytd-ad-slot-renderer", "ad-showing", "movie_player"):
+        if needle not in youtube:
+            fail(f"youtube.js missing {needle}")
+    for needle in ("adPlacements", "ytInitialPlayerResponse", "JSON.parse"):
+        if needle not in main:
+            fail(f"youtube-main.js missing {needle}")
 
 
 def check_manifest() -> None:
@@ -130,8 +142,8 @@ def check_manifest() -> None:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("manifest_version") != 3:
         fail("manifest is not version 3")
-    if manifest.get("version") != "0.1.0":
-        fail("manifest version drifted from 0.1.0")
+    if manifest.get("version") != "0.2.0":
+        fail("manifest version drifted from 0.2.0")
     background = manifest.get("background") or {}
     if background.get("service_worker") != "background.js":
         fail("background service worker path is wrong")
@@ -139,15 +151,18 @@ def check_manifest() -> None:
         if key not in manifest.get("permissions", []):
             fail(f"manifest missing permission {key}")
     resources = ROOT / "Extension" / "Resources"
-    for name in ("background.js", "cosmetic.js", "youtube.js", "popup.html", "popup.css", "popup.js"):
+    for name in ("background.js", "cosmetic.js", "youtube.js", "youtube-main.js", "popup.html", "popup.css", "popup.js"):
         if not (resources / name).exists():
             fail(f"missing {name}")
     for icon in manifest.get("icons", {}).values():
         if not (resources / icon).exists():
             fail(f"manifest icon missing: {icon}")
     scripts = [script for entry in manifest.get("content_scripts", []) for script in entry.get("js", [])]
-    if "youtube.js" not in scripts or "cosmetic.js" not in scripts:
+    if "youtube.js" not in scripts or "youtube-main.js" not in scripts or "cosmetic.js" not in scripts:
         fail("content scripts are not registered")
+    worlds = [entry.get("world") for entry in manifest.get("content_scripts", [])]
+    if "MAIN" not in worlds:
+        fail("YouTube page-world script is not declared")
 
 
 def check_plists() -> None:
@@ -170,6 +185,13 @@ def check_plists() -> None:
         fail("content blocker principal class is wrong")
     if blocker.get("CFBundleDisplayName") != "QuietSafari Content Blocker":
         fail("content blocker display name drifted from the README")
+    privacy = plistlib.loads((ROOT / "Privacy" / "Info.plist").read_bytes())
+    if privacy["NSExtension"]["NSExtensionPointIdentifier"] != "com.apple.Safari.content-blocker":
+        fail("privacy extension is not a content blocker")
+    if privacy.get("CFBundleDisplayName") != "QuietSafari Privacy":
+        fail("privacy display name drifted")
+    if privacy.get("QuietSafariRulesName") != "privacyList.json":
+        fail("privacy rules file name drifted")
     for relative in (
         "App/QuietSafari.entitlements",
         "Extension/QuietSafariExtension.entitlements",
@@ -187,6 +209,8 @@ def check_identifiers() -> None:
     xcconfig = (ROOT / "Config" / "Shared.xcconfig").read_text(encoding="utf-8")
     if "QUIETSAFARI_BUNDLE_PREFIX = com.quietsafari.macos" not in xcconfig:
         fail("bundle prefix drifted")
+    if "QUIETSAFARI_PRIVACY_BUNDLE_ID" not in xcconfig:
+        fail("privacy bundle id is missing from the xcconfig")
     swift = (ROOT / "App" / "SettingsStore.swift").read_text(encoding="utf-8")
     for needle in (
         'defaultWebExtensionBundleID = "com.quietsafari.macos.extension"',

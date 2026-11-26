@@ -228,6 +228,8 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "SettingsStore.swift": file_ref(project, "SettingsStore.swift", "sourcecode.swift", "App/SettingsStore.swift"),
         "RuleCompiler.swift": file_ref(project, "RuleCompiler.swift", "sourcecode.swift", "App/RuleCompiler.swift"),
         "TestPageServer.swift": file_ref(project, "TestPageServer.swift", "sourcecode.swift", "App/TestPageServer.swift"),
+        "FilterConverter.swift": file_ref(project, "FilterConverter.swift", "sourcecode.swift", "App/FilterConverter.swift"),
+        "FilterLibrary.swift": file_ref(project, "FilterLibrary.swift", "sourcecode.swift", "App/FilterLibrary.swift"),
     }
     app_plist = file_ref(project, "Info.plist", "text.plist.xml", "App/Info.plist")
     app_ents = file_ref(project, "QuietSafari.entitlements", "text.plist.entitlements", "App/QuietSafari.entitlements")
@@ -247,6 +249,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "text.plist.entitlements",
         "ContentBlocker/QuietSafariContentBlocker.entitlements",
     )
+    privacy_plist = file_ref(project, "Info.plist", "text.plist.xml", "Privacy/Info.plist")
 
     ext_source = file_ref(
         project,
@@ -269,6 +272,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "popup.html": file_ref(project, "popup.html", "text.html", "Extension/Resources/popup.html"),
         "popup.css": file_ref(project, "popup.css", "text.css", "Extension/Resources/popup.css"),
         "popup.js": file_ref(project, "popup.js", "sourcecode.javascript", "Extension/Resources/popup.js"),
+        "youtube-main.js": file_ref(project, "youtube-main.js", "sourcecode.javascript", "Extension/Resources/youtube-main.js"),
     }
     images = project.add(
         "PBXFileReference",
@@ -283,6 +287,8 @@ def render() -> tuple[str, str, str, dict[str, str]]:
 
     shared_swift = file_ref(project, "QuietSafariShared.swift", "sourcecode.swift", "Shared/QuietSafariShared.swift")
     rules = file_ref(project, "blockerList.json", "text.json", "Shared/blockerList.json")
+    privacy_rules = file_ref(project, "privacyList.json", "text.json", "Shared/privacyList.json")
+    filter_counts = file_ref(project, "filter-counts.json", "text.json", "Shared/filter-counts.json")
     xcconfig = file_ref(project, "Shared.xcconfig", "text.xcconfig", "Config/Shared.xcconfig")
     local_example = file_ref(project, "Local.xcconfig.example", "text", "Config/Local.xcconfig.example")
     architecture = file_ref(project, "ARCHITECTURE.md", "net.daringfireball.markdown", "docs/ARCHITECTURE.md")
@@ -340,6 +346,16 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             "sourceTree": "BUILT_PRODUCTS_DIR",
         },
     )
+    privacy_product = project.add(
+        "PBXFileReference",
+        "QuietSafariPrivacy.appex",
+        {
+            "explicitFileType": "wrapper.app-extension",
+            "includeInIndex": 0,
+            "path": "QuietSafariPrivacy.appex",
+            "sourceTree": "BUILT_PRODUCTS_DIR",
+        },
+    )
 
     resources_group = group(
         project,
@@ -357,6 +373,8 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(app_sources["SettingsStore.swift"], "SettingsStore.swift"),
             project.ref(app_sources["RuleCompiler.swift"], "RuleCompiler.swift"),
             project.ref(app_sources["TestPageServer.swift"], "TestPageServer.swift"),
+            project.ref(app_sources["FilterConverter.swift"], "FilterConverter.swift"),
+            project.ref(app_sources["FilterLibrary.swift"], "FilterLibrary.swift"),
             project.ref(assets, "Assets.xcassets"),
             project.ref(test_page, "TestPage.html"),
             project.ref(app_plist, "Info.plist"),
@@ -384,6 +402,14 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(blocker_ents, "QuietSafariContentBlocker.entitlements"),
         ],
     )
+    privacy_group = group(
+        project,
+        "Privacy",
+        "Privacy",
+        [
+            project.ref(privacy_plist, "Info.plist"),
+        ],
+    )
     shared_group = group(
         project,
         "Shared",
@@ -391,6 +417,8 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         [
             project.ref(shared_swift, "QuietSafariShared.swift"),
             project.ref(rules, "blockerList.json"),
+            project.ref(privacy_rules, "privacyList.json"),
+            project.ref(filter_counts, "filter-counts.json"),
         ],
     )
     config_group = group(
@@ -428,6 +456,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(app_product, "QuietSafari.app"),
             project.ref(ext_product, "QuietSafariExtension.appex"),
             project.ref(blocker_product, "QuietSafariContentBlocker.appex"),
+            project.ref(privacy_product, "QuietSafariPrivacy.appex"),
         ],
     )
     main_group = group(
@@ -438,6 +467,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(app_group, "App"),
             project.ref(ext_group, "Extension"),
             project.ref(blocker_group, "ContentBlocker"),
+            project.ref(privacy_group, "Privacy"),
             project.ref(shared_group, "Shared"),
             project.ref(config_group, "Config"),
             project.ref(docs_group, "docs"),
@@ -468,6 +498,8 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             (assets, "Assets.xcassets"),
             (test_page, "TestPage.html"),
             (rules, "blockerList.json"),
+            (privacy_rules, "privacyList.json"),
+            (filter_counts, "filter-counts.json"),
         ]
     )
     app_frameworks_phase = framework_phase(
@@ -488,6 +520,12 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "QuietSafariContentBlocker.appex",
         {"ATTRIBUTES": [Raw("CodeSignOnCopy"), Raw("RemoveHeadersOnCopy")]},
     )
+    embed_privacy = build_file(
+        project,
+        privacy_product,
+        "QuietSafariPrivacy.appex",
+        {"ATTRIBUTES": [Raw("CodeSignOnCopy"), Raw("RemoveHeadersOnCopy")]},
+    )
     embed_phase = phase(
         project,
         "PBXCopyFilesBuildPhase",
@@ -495,6 +533,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         [
             project.ref(embed_ext, "QuietSafariExtension.appex"),
             project.ref(embed_blocker, "QuietSafariContentBlocker.appex"),
+            project.ref(embed_privacy, "QuietSafariPrivacy.appex"),
         ],
         {"dstPath": "", "dstSubfolderSpec": 13, "name": "Embed Foundation Extensions"},
     )
@@ -518,6 +557,14 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     )
     blocker_resources_phase = resource_phase([(rules, "blockerList.json")])
     blocker_frameworks_phase = framework_phase([])
+    privacy_sources_phase = source_phase(
+        [
+            (blocker_source, "ContentBlockerRequestHandler.swift"),
+            (shared_swift, "QuietSafariShared.swift"),
+        ]
+    )
+    privacy_resources_phase = resource_phase([(privacy_rules, "privacyList.json")])
+    privacy_frameworks_phase = framework_phase([])
 
     runpaths_app = ["$(inherited)", "@executable_path/../Frameworks"]
     runpaths_ext = [
@@ -574,6 +621,20 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             "WRAPPER_EXTENSION": "appex",
         }
     )
+    privacy_debug, privacy_release = target_settings(
+        {
+            "APPLICATION_EXTENSION_API_ONLY": True,
+            "CODE_SIGN_ENTITLEMENTS": "ContentBlocker/QuietSafariContentBlocker.entitlements",
+            "GENERATE_INFOPLIST_FILE": False,
+            "INFOPLIST_FILE": "Privacy/Info.plist",
+            "LD_RUNPATH_SEARCH_PATHS": runpaths_ext,
+            "PRODUCT_BUNDLE_IDENTIFIER": "$(QUIETSAFARI_PRIVACY_BUNDLE_ID)",
+            "PRODUCT_MODULE_NAME": "QuietSafariPrivacy",
+            "PRODUCT_NAME": "QuietSafariPrivacy",
+            "SKIP_INSTALL": True,
+            "WRAPPER_EXTENSION": "appex",
+        }
+    )
     project_debug = configuration(project, xcconfig, "Debug", build_settings(True))
     project_release = configuration(project, xcconfig, "Release", build_settings(False))
 
@@ -586,6 +647,12 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         blocker_debug,
         blocker_release,
         'Build configuration list for PBXNativeTarget "QuietSafariContentBlocker"',
+    )
+    privacy_list = config_list(
+        project,
+        privacy_debug,
+        privacy_release,
+        'Build configuration list for PBXNativeTarget "QuietSafariPrivacy"',
     )
     project_list = config_list(project, project_debug, project_release, "Build configuration list for PBXProject")
 
@@ -652,6 +719,26 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             "productType": "com.apple.product-type.app-extension",
         },
     )
+    privacy_target = project.add(
+        "PBXNativeTarget",
+        "QuietSafariPrivacy",
+        {
+            "buildConfigurationList": project.ref(
+                privacy_list, 'Build configuration list for PBXNativeTarget "QuietSafariPrivacy"'
+            ),
+            "buildPhases": [
+                project.ref(privacy_sources_phase, "Sources"),
+                project.ref(privacy_frameworks_phase, "Frameworks"),
+                project.ref(privacy_resources_phase, "Resources"),
+            ],
+            "buildRules": [],
+            "dependencies": [],
+            "name": "QuietSafariPrivacy",
+            "productName": "QuietSafariPrivacy",
+            "productReference": project.ref(privacy_product, "QuietSafariPrivacy.appex"),
+            "productType": "com.apple.product-type.app-extension",
+        },
+    )
     app_target = project.add(
         "PBXNativeTarget",
         "QuietSafari",
@@ -667,6 +754,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             "dependencies": [
                 project.ref(dependency(ext_target, "QuietSafariExtension"), "QuietSafariExtension"),
                 project.ref(dependency(blocker_target, "QuietSafariContentBlocker"), "QuietSafariContentBlocker"),
+                project.ref(dependency(privacy_target, "QuietSafariPrivacy"), "QuietSafariPrivacy"),
             ],
             "name": "QuietSafari",
             "productName": "QuietSafari",
@@ -694,6 +782,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
                             Raw(app_target): {"CreatedOnToolsVersion": "16.0"},
                             Raw(ext_target): {"CreatedOnToolsVersion": "16.0"},
                             Raw(blocker_target): {"CreatedOnToolsVersion": "16.0"},
+                            Raw(privacy_target): {"CreatedOnToolsVersion": "16.0"},
                         },
                     },
                     "buildConfigurationList": project.ref(project_list, "Build configuration list for PBXProject"),
@@ -709,6 +798,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
                         project.ref(app_target, "QuietSafari"),
                         project.ref(ext_target, "QuietSafariExtension"),
                         project.ref(blocker_target, "QuietSafariContentBlocker"),
+                        project.ref(privacy_target, "QuietSafariPrivacy"),
                     ],
                 },
             )
@@ -764,7 +854,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     chunks.append("}")
     chunks.append("")
     pbx = "\n".join(chunks)
-    scheme = scheme_text(app_target, ext_target, blocker_target)
+    scheme = scheme_text(app_target, ext_target, blocker_target, privacy_target)
     workspace = """<?xml version="1.0" encoding="UTF-8"?>
 <Workspace
    version = "1.0">
@@ -781,7 +871,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     }
 
 
-def scheme_text(app: str, extension: str, blocker: str) -> str:
+def scheme_text(app: str, extension: str, blocker: str, privacy: str) -> str:
     def entry(identifier: str, name: str, product: str, testing: str = "YES") -> str:
         return f"""         <BuildActionEntry
             buildForTesting = "{testing}"
@@ -815,6 +905,7 @@ def scheme_text(app: str, extension: str, blocker: str) -> str:
       <BuildActionEntries>
 {entry(extension, "QuietSafariExtension", "QuietSafariExtension.appex")}
 {entry(blocker, "QuietSafariContentBlocker", "QuietSafariContentBlocker.appex")}
+{entry(privacy, "QuietSafariPrivacy", "QuietSafariPrivacy.appex")}
 {entry(app, "QuietSafari", "QuietSafari.app")}
       </BuildActionEntries>
    </BuildAction>

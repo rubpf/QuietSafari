@@ -10,6 +10,8 @@ enum QuietSafariShared {
     static let settingsFileName = "settings.json"
     static let statsFileName = "stats.json"
     static let rulesFileName = "blockerList.json"
+    static let privacyRulesFileName = "privacyList.json"
+    static let bundledFilterVersion = 2
 
     static let log = Logger(subsystem: "com.quietsafari.macos", category: "shared")
 
@@ -27,11 +29,18 @@ enum QuietSafariShared {
     }
 
     /// Prefer rules written by the app (allowlist already applied). Fall back to the copy in the bundle.
-    static func resolvedRulesURL(bundled: URL?) -> URL? {
-        if let url = fileURL(rulesFileName), FileManager.default.fileExists(atPath: url.path) {
+    static func resolvedRulesURL(named name: String, bundled: URL?) -> URL? {
+        if let url = fileURL(name), FileManager.default.fileExists(atPath: url.path) {
             return url
         }
         return bundled
+    }
+
+    static func readRules(named name: String) -> Data? {
+        guard let url = fileURL(name) else {
+            return nil
+        }
+        return try? Data(contentsOf: url)
     }
 
     static func readSettings() -> QuietSafariSettings {
@@ -53,8 +62,8 @@ enum QuietSafariShared {
     }
 
     @discardableResult
-    static func writeRules(_ data: Data) -> Bool {
-        guard let url = fileURL(rulesFileName) else {
+    static func writeRules(_ data: Data, named name: String) -> Bool {
+        guard let url = fileURL(name) else {
             log.error("App group container is unavailable; rules were not written")
             return false
         }
@@ -65,6 +74,29 @@ enum QuietSafariShared {
             log.error("Failed to write rules: \(error.localizedDescription, privacy: .public)")
             return false
         }
+    }
+
+    /// Safari asks a content blocker for rules only while that extension is switched on.
+    /// Each blocker writes its own file so the two extensions cannot overwrite each other.
+    static func markRulesServed(named name: String) {
+        guard let url = fileURL("served-" + name) else {
+            return
+        }
+        let body = ["at": Date().timeIntervalSince1970]
+        guard let data = try? JSONSerialization.data(withJSONObject: body) else {
+            return
+        }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    static func lastServed(named name: String) -> TimeInterval? {
+        guard let url = fileURL("served-" + name),
+              let data = try? Data(contentsOf: url),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let number = object["at"] as? NSNumber else {
+            return nil
+        }
+        return number.doubleValue
     }
 
     private static func fileURL(_ name: String) -> URL? {

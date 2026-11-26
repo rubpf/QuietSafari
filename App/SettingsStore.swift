@@ -11,7 +11,9 @@ final class SettingsStore: ObservableObject {
     @Published var appGroupAvailable: Bool
     @Published var appGroupID: String
     @Published var contentBlockerEnabled: Bool?
+    @Published var privacyBlockerEnabled: Bool?
     @Published var webExtensionEnabled: Bool?
+    @Published var filterSummary = ""
     @Published var statusMessage = ""
     @Published var statusIsError = false
     @Published var isBusy = false
@@ -21,6 +23,11 @@ final class SettingsStore: ObservableObject {
     private var started = false
     private var pollTick = 0
     private var reloadGeneration = 0
+    private let processStartedAt = Date().timeIntervalSince1970
+    private var contentBlockerAPIConfirmed = false
+    private var privacyAPIConfirmed = false
+    private var contentBlockerReloadOK: Bool?
+    private var privacyReloadOK: Bool?
 
     deinit {
         timer?.invalidate()
@@ -36,8 +43,11 @@ final class SettingsStore: ObservableObject {
     }
 
     var versionText: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
-        return "Версия \(version). Пока используется короткий проверочный список. EasyList и EasyPrivacy подключаются на следующем этапе."
+        if !filterSummary.isEmpty {
+            return filterSummary
+        }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.2.0"
+        return "Версия \(version)."
     }
 
     func start() {
@@ -85,7 +95,23 @@ final class SettingsStore: ObservableObject {
     }
 
     func reapplyRules() {
-        persistAndReload(userInitiated: true)
+        isBusy = true
+        statusMessage = "Скачиваю EasyList и EasyPrivacy…"
+        statusIsError = false
+        FilterLibrary.download { [weak self] result in
+            guard let self else {
+                return
+            }
+            switch result {
+            case .success(let meta):
+                self.filterSummary = FilterLibrary.summary(meta)
+                self.persistAndReload(userInitiated: true)
+            case .failure(let error):
+                self.isBusy = false
+                self.statusMessage = error.localizedDescription
+                self.statusIsError = true
+            }
+        }
     }
 
     func openTestPage() {
@@ -136,13 +162,33 @@ final class SettingsStore: ObservableObject {
     }
 
     private func refreshExtensionStates() {
-        let blockerID = QuietSafariIdentity.contentBlockerBundleID
+        let adsID = QuietSafariIdentity.contentBlockerBundleID
+        let privacyID = QuietSafariIdentity.privacyBundleID
         let extensionID = QuietSafariIdentity.webExtensionBundleID
-        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: blockerID) { state, _ in
+        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: adsID) { state, _ in
             DispatchQueue.main.async {
-                if let state {
-                    self.contentBlockerEnabled = state.isEnabled
-                }
+                let api = state.map(\.isEnabled)
+                var confirmed = self.contentBlockerAPIConfirmed
+                self.contentBlockerEnabled = self.decide(
+                    api: api,
+                    servedName: QuietSafariShared.rulesFileName,
+                    reloadOK: self.contentBlockerReloadOK,
+                    sawAPITrue: &confirmed
+                )
+                self.contentBlockerAPIConfirmed = confirmed
+            }
+        }
+        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: privacyID) { state, _ in
+            DispatchQueue.main.async {
+                let api = state.map(\.isEnabled)
+                var confirmed = self.privacyAPIConfirmed
+                self.privacyBlockerEnabled = self.decide(
+                    api: api,
+                    servedName: QuietSafariShared.privacyRulesFileName,
+                    reloadOK: self.privacyReloadOK,
+                    sawAPITrue: &confirmed
+                )
+                self.privacyAPIConfirmed = confirmed
             }
         }
         SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionID) { state, _ in
@@ -154,65 +200,93 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    /// SFContentBlockerState.isEnabled has been observed stuck on false while Safari's
+    /// own checkbox is on. A successful reload, or Safari asking the extension for rules,
+    /// is treated as enabled until the API itself has reported true at least once.
+    private func decide(api: Bool?, servedName: String, reloadOK: Bool?, sawAPITrue: inout Bool) -> Bool? {
+        if api == true {
+            sawAPITrue = true
+            return true
+        }
+        if sawAPITrue {
+            return api
+        }
+        let servedAt = QuietSafariShared.lastServed(named: servedName) ?? 0
+        if servedAt >= processStartedAt || reloadOK == true {
+            return true
+        }
+        if api == false || reloadOK == false {
+            return false
+        }
+        return nil
+    }
+
     private func persistAndReload(userInitiated: Bool, revert: (() -> Void)? = nil) {
-        appGroupAvailable = QuietSafariShared.containerURL != nil
-        appGroupID = QuietSafariShared.appGroupID
         let settings = QuietSafariSettings(blockingEnabled: blockingEnabled, allowlist: allowlist)
-
-        guard QuietSafariShared.containerURL != nil else {
-            revert?()
-            if userInitiated || statusMessage.isEmpty {
-                statusMessage = "Общая папка между приложением и расширениями недоступна. Скрытие по встроенному списку всё равно работает. Чтобы заработали переключатель и белый список, выберите одну и ту же команду (Team) у всех трёх целей и нажмите Run ещё раз."
-                statusIsError = true
-            }
-            return
-        }
-
-        guard let bundledURL = Bundle.main.url(forResource: "blockerList", withExtension: "json"),
-              let baseJSON = try? Data(contentsOf: bundledURL) else {
-            revert?()
-            statusMessage = RuleCompiler.CompileError.unreadable.localizedDescription
-            statusIsError = true
-            return
-        }
-
-        let compiled: Data
-        do {
-            compiled = try RuleCompiler.compile(baseJSON: baseJSON, settings: settings)
-        } catch {
-            revert?()
-            statusMessage = error.localizedDescription
-            statusIsError = true
-            return
-        }
-
-        guard QuietSafariShared.writeSettings(settings), QuietSafariShared.writeRules(compiled) else {
-            revert?()
-            statusMessage = "Не удалось записать правила в общую папку."
-            statusIsError = true
-            return
-        }
-
         isBusy = true
         reloadGeneration += 1
         let generation = reloadGeneration
-        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.contentBlockerBundleID) { error in
+        DispatchQueue.global(qos: .userInitiated).async {
+            let meta = FilterLibrary.prepare()
+            let wroteSettings = QuietSafariShared.writeSettings(settings)
+            let wroteRules = FilterLibrary.apply(settings: settings)
             DispatchQueue.main.async {
                 guard generation == self.reloadGeneration else {
                     return
                 }
-                self.isBusy = false
-                self.refreshExtensionStates()
-                guard userInitiated else {
+                self.appGroupAvailable = QuietSafariShared.containerURL != nil
+                self.appGroupID = QuietSafariShared.appGroupID
+                if meta.adCount > 0 {
+                    self.filterSummary = FilterLibrary.summary(meta)
+                }
+                guard wroteSettings, wroteRules else {
+                    revert?()
+                    self.isBusy = false
+                    self.statusMessage = self.appGroupAvailable
+                        ? "Не удалось записать правила в общую папку."
+                        : "Общая папка недоступна. Выберите одну и ту же команду (Team) у всех целей и нажмите Run ещё раз. Встроенные списки при этом всё равно отдаются Safari."
+                    self.statusIsError = true
                     return
                 }
-                if let error {
-                    self.statusMessage = "Не удалось применить правила: \(error.localizedDescription). Если расширение ещё не включено в Safari, включите его и нажмите кнопку ещё раз."
-                    self.statusIsError = true
-                } else {
-                    self.statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
-                    self.statusIsError = false
-                }
+                self.reloadBlockers(generation: generation, userInitiated: userInitiated)
+            }
+        }
+    }
+
+    private func reloadBlockers(generation: Int, userInitiated: Bool) {
+        let group = DispatchGroup()
+        let outcome = ReloadOutcome()
+        group.enter()
+        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.contentBlockerBundleID) { error in
+            outcome.ads = error
+            group.leave()
+        }
+        group.enter()
+        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.privacyBundleID) { error in
+            outcome.privacy = error
+            group.leave()
+        }
+        group.notify(queue: .main) {
+            guard generation == self.reloadGeneration else {
+                return
+            }
+            self.isBusy = false
+            self.contentBlockerReloadOK = outcome.ads == nil
+            self.privacyReloadOK = outcome.privacy == nil
+            self.refreshExtensionStates()
+            guard userInitiated else {
+                return
+            }
+            if outcome.ads != nil && outcome.privacy != nil {
+                self.statusMessage = "Не удалось применить правила: \(outcome.ads?.localizedDescription ?? ""). Если расширение выключено в Safari, включите его и нажмите кнопку ещё раз."
+                self.statusIsError = true
+            } else if outcome.ads != nil || outcome.privacy != nil {
+                let name = outcome.ads != nil ? "QuietSafari Content Blocker" : "QuietSafari Privacy"
+                self.statusMessage = "\(name) не принял правила. Включите его в Safari → Настройки → Дополнения и нажмите кнопку ещё раз."
+                self.statusIsError = true
+            } else {
+                self.statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
+                self.statusIsError = false
             }
         }
     }
@@ -232,24 +306,38 @@ final class SettingsStore: ObservableObject {
     }
 }
 
+private final class ReloadOutcome {
+    var ads: Error?
+    var privacy: Error?
+}
+
 enum QuietSafariIdentity {
     static let defaultWebExtensionBundleID = "com.quietsafari.macos.extension"
     static let defaultContentBlockerBundleID = "com.quietsafari.macos.content-blocker"
+    static let defaultPrivacyBundleID = "com.quietsafari.macos.privacy"
 
     static var webExtensionBundleID: String {
-        resolved("QuietSafariWebExtensionBundleID", fallback: defaultWebExtensionBundleID)
+        embedded("QuietSafariExtension.appex", fallback: defaultWebExtensionBundleID)
     }
 
     static var contentBlockerBundleID: String {
-        resolved("QuietSafariContentBlockerBundleID", fallback: defaultContentBlockerBundleID)
+        embedded("QuietSafariContentBlocker.appex", fallback: defaultContentBlockerBundleID)
     }
 
-    private static func resolved(_ key: String, fallback: String) -> String {
-        let value = (Bundle.main.object(forInfoDictionaryKey: key) as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if value.isEmpty || value.contains("$") {
+    static var privacyBundleID: String {
+        embedded("QuietSafariPrivacy.appex", fallback: defaultPrivacyBundleID)
+    }
+
+    /// The built appex Info.plist is the identifier Safari registered. The host
+    /// plist can disagree when a build setting fails to expand.
+    private static func embedded(_ appexName: String, fallback: String) -> String {
+        guard let url = Bundle.main.builtInPlugInsURL?.appendingPathComponent(appexName),
+              let identifier = Bundle(url: url)?.bundleIdentifier?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+              !identifier.isEmpty,
+              !identifier.contains("$") else {
             return fallback
         }
-        return value
+        return identifier
     }
 }

@@ -29,6 +29,8 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).ContentBlockerRequestHandler</string>
 	</dict>
+	<key>QuietSafariRulesName</key>
+	<string>blockerList.json</string>
 	<key>QuietSafariAppGroup</key>
 	<string>$(TeamIdentifierPrefix)com.quietsafari.shared</string>
 </dict>

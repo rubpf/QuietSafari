@@ -37,7 +37,7 @@ enum RuleCompiler {
         guard JSONSerialization.isValidJSONObject(rules) else {
             throw CompileError.unreadable
         }
-        return try JSONSerialization.data(withJSONObject: rules, options: [.prettyPrinted, .sortedKeys])
+        return try JSONSerialization.data(withJSONObject: rules)
     }
 }
 

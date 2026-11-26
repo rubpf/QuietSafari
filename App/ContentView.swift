@@ -118,7 +118,7 @@ struct ContentView: View {
         } header: {
             Text("Фильтры")
         } footer: {
-            Text("Кнопка заново отдаёт Safari текущий список. Скачивание EasyList и EasyPrivacy появится на следующем этапе — сейчас список короткий и уже лежит в приложении.")
+            Text("Кнопка скачивает EasyList и EasyPrivacy и переводит их в правила Safari. Пока скачивания не было, работают списки, встроенные в приложение.")
         }
     }
 
@@ -146,6 +146,7 @@ struct ContentView: View {
     private var stateSection: some View {
         Section {
             labeledState("QuietSafari Content Blocker", enabled: store.contentBlockerEnabled)
+            labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled)
             labeledState("QuietSafari", enabled: store.webExtensionEnabled)
             LabeledContent("Общая папка") {
                 Text(store.appGroupAvailable ? "доступна" : "недоступна")
@@ -215,8 +216,8 @@ struct ContentView: View {
         """
         1. Safari → Настройки → Дополнительно → включите «Показывать функции для веб-разработчиков».
         2. Меню «Разработка» → «Разрешить неподписанные расширения». Safari забывает этот пункт, когда его полностью закрывают.
-        3. Safari → Настройки → Дополнения. Включите и QuietSafari, и QuietSafari Content Blocker.
-        4. У QuietSafari разрешите доступ ко всем сайтам. Оба расширения должны быть включены: одно прячет элементы и YouTube, второе обрывает рекламные адреса.
+        3. Safari → Настройки → Дополнения. Включите три пункта: QuietSafari, QuietSafari Content Blocker и QuietSafari Privacy.
+        4. У QuietSafari разрешите доступ ко всем сайтам. Content Blocker — реклама EasyList, Privacy — трекеры EasyPrivacy, QuietSafari — YouTube и счётчик.
         """
     }
 }

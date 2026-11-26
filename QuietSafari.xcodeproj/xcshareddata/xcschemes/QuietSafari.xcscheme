@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A10000000000000000000060"
+               BlueprintIdentifier = "A10000000000000000000077"
                BuildableName = "QuietSafariExtension.appex"
                BlueprintName = "QuietSafariExtension"
                ReferencedContainer = "container:QuietSafari.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A10000000000000000000061"
+               BlueprintIdentifier = "A10000000000000000000078"
                BuildableName = "QuietSafariContentBlocker.appex"
                BlueprintName = "QuietSafariContentBlocker"
                ReferencedContainer = "container:QuietSafari.xcodeproj">
@@ -42,7 +42,21 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A10000000000000000000066"
+               BlueprintIdentifier = "A10000000000000000000079"
+               BuildableName = "QuietSafariPrivacy.appex"
+               BlueprintName = "QuietSafariPrivacy"
+               ReferencedContainer = "container:QuietSafari.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A10000000000000000000080"
                BuildableName = "QuietSafari.app"
                BlueprintName = "QuietSafari"
                ReferencedContainer = "container:QuietSafari.xcodeproj">
@@ -70,7 +84,7 @@
          runnableDebuggingMode = "0">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A10000000000000000000066"
+               BlueprintIdentifier = "A10000000000000000000080"
                BuildableName = "QuietSafari.app"
                BlueprintName = "QuietSafari"
                ReferencedContainer = "container:QuietSafari.xcodeproj">
@@ -87,7 +101,7 @@
          runnableDebuggingMode = "0">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A10000000000000000000066"
+               BlueprintIdentifier = "A10000000000000000000080"
                BuildableName = "QuietSafari.app"
                BlueprintName = "QuietSafari"
                ReferencedContainer = "container:QuietSafari.xcodeproj">

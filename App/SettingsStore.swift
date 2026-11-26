@@ -67,7 +67,7 @@ final class SettingsStore: ObservableObject {
             return filterSummary
         }
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.2.0"
-        return "Версия \(version)."
+        return "Version \(version)."
     }
 
     func start() {
@@ -105,10 +105,10 @@ final class SettingsStore: ObservableObject {
 
     func addSite(_ raw: String) -> String? {
         guard let domain = DomainNormalizer.normalize(raw) else {
-            return "Не получилось распознать адрес. Напишите его как example.com — без https и без пути."
+            return "Could not read that address. Use example.com, without https or a path."
         }
         if allowlist.contains(domain) {
-            return "Этот сайт уже в списке."
+            return "That site is already in the list."
         }
         let previous = allowlist
         allowlist.append(domain)
@@ -129,7 +129,7 @@ final class SettingsStore: ObservableObject {
 
     func reapplyRules() {
         isBusy = true
-        statusMessage = "Скачиваю EasyList, EasyPrivacy и RU AdList…"
+        statusMessage = "Downloading EasyList, EasyPrivacy, and RU AdList…"
         statusIsError = false
         FilterLibrary.download { [weak self] result in
             guard let self else {
@@ -164,7 +164,7 @@ final class SettingsStore: ObservableObject {
                 DispatchQueue.main.async {
                     self.isBusy = false
                     self.openInSafari(pageURL)
-                    self.statusMessage = "Открыл проверочную страницу в Safari. Если macOS спросил про входящие соединения, нажмите «Разрешить» — сервер слушает только этот компьютер."
+                    self.statusMessage = "Opened the test page in Safari. If macOS asks about incoming connections, click Allow. The server only listens on this Mac."
                     self.statusIsError = false
                 }
             } catch {
@@ -191,7 +191,7 @@ final class SettingsStore: ObservableObject {
     }
 
     /// Safari sometimes never calls back for a large content blocker, which used to
-    /// leave the row on "ещё не проверено" forever. After a short wait, say it is off
+    /// leave the row on "not checked yet" forever. After a short wait, say it is off
     /// and point at the duplicate-extension cleanup.
     private func settleUnknownStates() {
         guard !statusTimedOut else { return }
@@ -202,7 +202,7 @@ final class SettingsStore: ObservableObject {
         if contentBlockerEnabled == nil { contentBlockerEnabled = false }
         if privacyBlockerEnabled == nil { privacyBlockerEnabled = false }
         if russianBlockerEnabled == nil { russianBlockerEnabled = false }
-        statusMessage = "Safari не ответил про одно из расширений. Закройте Safari, удалите старые копии QuietSafari (раздел README «Две копии одного расширения») и нажмите Run."
+        statusMessage = "Safari did not answer about one extension. Quit Safari, delete old QuietSafari copies (README: Two copies of one extension), and press Run."
         statusIsError = true
     }
 
@@ -292,7 +292,7 @@ final class SettingsStore: ObservableObject {
             hideDockIcon: hideDockIcon
         )
         if !QuietSafariShared.writeSettings(settings) {
-            statusMessage = "Не удалось сохранить настройку значка."
+            statusMessage = "Could not save the Dock setting."
             statusIsError = true
         }
     }
@@ -305,11 +305,11 @@ final class SettingsStore: ObservableObject {
                 try SMAppService.mainApp.unregister()
             }
             launchAtLogin = SMAppService.mainApp.status == .enabled
-            statusMessage = enabled ? "QuietSafari откроется при входе в систему." : "Автозапуск выключен."
+            statusMessage = enabled ? "QuietSafari will open at login." : "Launch at login is off."
             statusIsError = false
         } catch {
             launchAtLogin = SMAppService.mainApp.status == .enabled
-            statusMessage = "Автозапуск: \(error.localizedDescription)"
+            statusMessage = "Launch at login: \(error.localizedDescription)"
             statusIsError = true
         }
     }
@@ -331,7 +331,7 @@ final class SettingsStore: ObservableObject {
         SFSafariApplication.showPreferencesForExtension(withIdentifier: QuietSafariIdentity.webExtensionBundleID) { error in
             DispatchQueue.main.async {
                 if let error {
-                    self.statusMessage = "Не удалось открыть настройки Safari: \(error.localizedDescription)"
+                    self.statusMessage = "Could not open Safari settings: \(error.localizedDescription)"
                     self.statusIsError = true
                 }
             }
@@ -405,8 +405,8 @@ final class SettingsStore: ObservableObject {
                     revert?()
                     self.isBusy = false
                     self.statusMessage = self.appGroupAvailable
-                        ? "Не удалось записать правила в общую папку."
-                        : "Общая папка недоступна. Выберите одну и ту же команду (Team) у всех целей и нажмите Run ещё раз. Встроенные списки при этом всё равно отдаются Safari."
+                        ? "Could not write the rules to the shared folder."
+                        : "The shared folder is unavailable. Choose the same Team on every target and press Run again. Safari still receives the built-in lists."
                     self.statusIsError = true
                     return
                 }
@@ -530,16 +530,16 @@ final class SettingsStore: ObservableObject {
         }
         if userInitiated {
             if ads.interrupted || privacy.interrupted || russian.interrupted {
-                statusMessage = "Safari прервал обновление. Уже загруженные правила остаются, блокировка не сбрасывается."
+                statusMessage = "Safari interrupted the update. The rules already loaded stay in place."
                 statusIsError = false
             } else {
-                statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
+                statusMessage = "Rules applied. Reload pages that are already open in Safari."
                 statusIsError = false
             }
         }
     }
 
-    /// Interrupted reloads are not rule rejections. A missing extension is «выключено», not «ошибка».
+    /// Interrupted reloads are not rule rejections. A missing extension is "off", not "error".
     private static func classify(_ error: Error?) -> (problem: String, reloadOK: Bool?, interrupted: Bool) {
         guard let error else { return ("", true, false) }
         let nsError = error as NSError
@@ -559,7 +559,7 @@ final class SettingsStore: ObservableObject {
         NSWorkspace.shared.open([url], withApplicationAt: safari, configuration: configuration) { _, error in
             if let error {
                 DispatchQueue.main.async {
-                    self.statusMessage = "Не удалось открыть Safari: \(error.localizedDescription)"
+                    self.statusMessage = "Could not open Safari: \(error.localizedDescription)"
                     self.statusIsError = true
                 }
             }

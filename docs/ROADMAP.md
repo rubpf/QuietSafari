@@ -1,80 +1,73 @@
-# Дорожная карта QuietSafari
+# QuietSafari roadmap
 
-Шесть ранних этапов — ниже. Что делать после них, вытекает из каталога [типов рекламы](AD_TYPES.md): сначала дыры, которые вы уже видите, потом движок, без которого остальные виды не закрыть, и только затем новые списки. Стабильность важнее ширины. Правило, которое может отвергнуть весь файл или спрятать статью, не включается.
+The early stages are below. What comes after follows the [ad-type catalogue](AD_TYPES.md): close the holes you can already see, then the engine the rest of the types need, and only then more lists. Stability comes first. A rule that can reject the whole file, or hide an article, stays out.
 
-## 1. Каркас — сделано
+## 1. Scaffold — done
 
-Приложение открывается в Xcode, запускается вашей бесплатной подписью и содержит оба расширения Safari.
+The app opens in Xcode, runs with a free signature, and contains the Safari extensions.
 
-Уже есть окно с выключателем, белым списком, счётчиком и кнопкой фильтров. Окончательный вид окна (строка меню, запуск вместе с Mac) — этап 4.
+The window has the switch, allowlist, counter, and filter button. The menu bar and launch at login landed with the later settings work.
 
-Как проверить: шаги в [README](../README.md). На проверочной странице нет красных блоков «РЕКЛАМА», зелёный текст на месте.
+How to check: the steps in the [README](../README.md). On the test page the red AD blocks are gone and the green paragraph stays.
 
-## 2. Баннеры и сетевая реклама — сделано в коде, ждёт проверки на Mac
+## 2. Banners and network ads — in the code
 
-Окно скачивает EasyList и EasyPrivacy, переводит их в правила Safari и отдаёт двум блокировщикам контента. В репозитории уже лежит готовый перевод, чтобы блокировка работала до первого нажатия кнопки.
+The window downloads EasyList and EasyPrivacy, converts them to Safari rules, and serves them from two content blockers. A converted copy is already in the repo, so blocking works before the first download.
 
-Готово, когда:
+Done when:
 
-- кнопка «Обновить фильтры» реально скачивает списки и пишет дату обновления;
-- правила режутся так, чтобы в каждом блокировщике было не больше 100 000 штук и файл оставался в безопасном размере;
-- если один блокировщик переполнен, появляется второй (реклама и приватность раздельно), а белый список копируется в оба;
-- сомнительные строки не попадают в JSON, а попадают в понятный журнал «не переведено»;
-- в окне видна лицензия списков из их шапки;
-- на обычных сайтах пропадают типичные баннеры и боковые блоки, а обычный текст остаётся;
-- выключение и белый список по-прежнему снимают блокировку после обновления страницы.
+- Update filters really downloads the lists and shows a date;
+- each blocker stays under the safe size and under 150,000 rules;
+- ads and privacy are separate blockers, and the allowlist is copied into each;
+- uncertain lines are dropped instead of written into the JSON;
+- ordinary sites lose typical banners, and the article text stays;
+- turning blocking off, or using the allowlist, restores ads after a reload.
 
-## 3. YouTube — сделано в коде, ждёт проверки на Mac
+## 3. YouTube — in the code
 
-Скрипт `Extension/Resources/youtube-main.js` запускается в мире страницы в самом начале загрузки и вырезает рекламные поля из ответа плеера. `youtube.js` прячет баннеры и, если ролик всё же начался, перематывает его. Обычное видео и адрес `googlevideo.com` не блокируются.
+`Extension/Resources/youtube-main.js` runs in the page world at the start of the load and strips ad fields from the player response. `youtube.js` hides banners and seeks a short ad if one still starts. The real video and `googlevideo.com` are not blocked.
 
-Готово, когда на youtube.com:
+Done on youtube.com when:
 
-- в ленте и на странице ролика нет рекламных блоков;
-- ролик в начале и, насколько это удаётся поймать, в середине пропускается;
-- обычное видео играет, перемотка и звук на месте;
-- сайт из белого списка, включая youtube.com, снова показывает рекламу;
-- если YouTube меняет вёрстку, правка ограничена этим файлом, а в документе остаётся короткая ручная проверка: главная, страница ролика, ролик с рекламой.
+- the feed and the watch page have no ad slots;
+- a pre-roll, and a mid-roll when it can be caught, is skipped;
+- a normal video plays, with seeking and sound;
+- an allowlisted site, including youtube.com, shows ads again.
 
-Домены `googlevideo.com` и `youtube.com` по-прежнему не запрещаются целиком.
+`googlevideo.com` and `youtube.com` are still not blocked wholesale.
 
-## 4. Окно настроек
+## 4. Settings window
 
-Окно из этапа 1 доводится до повседневного:
+The everyday window:
 
-- строка меню, чтобы не искать иконку в Dock;
-- по желанию — запуск вместе с Mac и обновление списков раз в сутки, пока приложение открыто;
-- экран «О фильтрах»: какие списки включены, когда обновлялись, сколько правил вошло;
-- сброс счётчика;
-- те же выключатель и белый список, без второй, противоречащей им панели.
+- a menu bar icon, so you do not hunt for the Dock icon;
+- optional launch at login;
+- filter counts and the last update;
+- the same switch and allowlist, not a second conflicting panel.
 
-Готово, когда все эти действия делаются из окна и из строки меню, а Safari после них ведёт себя так же, как если бы вы нажали кнопку в этапе 2.
+Done when those actions work from the window and the menu bar, and Safari behaves as it does after Update filters.
 
-## 5. Проверки и шлифовка
+## 5. Checks
 
-Автоматические проверки конвертера на наборе примеров правил, плюс ещё один проход по окну: пустой белый список, кривой адрес, нет интернета в момент обновления, Safari ещё не включил расширение.
+Automated checks for the converter, plus the window: empty allowlist, a bad address, no network during an update, and Safari with the extension still off.
 
-Готово, когда сломанный перевод правила не может незаметно опустошить весь блокировщик, а сообщения об ошибках остаются по-русски и говорят, что нажать.
+Done when a bad conversion cannot silently empty a blocker, and error text says what to press.
 
-## 6. Подпись и распространение
+## 6. Signing and distribution
 
-Только если понадобится ставить QuietSafari не из Xcode.
+The free path is an ad-hoc Release build from GitHub Actions: zip, disk image, and SHA256, with no paid Apple account. Safari still needs Allow Unsigned Extensions, and it forgets that when it quits.
 
-Нужна платная программа Apple Developer, подпись Developer ID и нотаризация. После этого пункт «Разрешить неподписанные расширения» больше не нужен, и семидневный профиль тоже. До этого этапа обычный путь — Run в Xcode.
+A paid Developer ID signature and notarization would remove that step. That is not this release.
 
-Готово, когда свежескачанное приложение открывается на вашем Mac, оба расширения остаются включёнными после перезапуска Safari, а Gatekeeper не называет файл повреждённым.
+iPhone is not in these stages. It would reuse the rules and scripts, with a different shared folder and a paid account.
 
-iPhone в эти шесть этапов не входит. К нему можно вернуться отдельно: те же правила и скрипты, но другая общая папка и платный аккаунт.
+## Next, from the ad-type catalogue
 
-## Дальше, по каталогу типов
+1. **Russian sites.** In the code: QuietSafari Russian, RU AdList (CC BY 3.0, advblock), and rules for `yandex.ru/ads`, `an.yandex.ru`, `yabs.yandex.ru`, Adfox, and `yandex_rtb`. Search, maps, and the home page are not blocked. `mc.yandex.ru` is on the privacy list. Check on a Mac: rifme.net without the ad cards, and `yandex.ru/maps` still opens.
+2. **Status row.** If Safari is silent, the row does not stay on “not checked yet”. A real rejection says “error”. An interrupted reload (`SFErrorDomain` error 3) does not.
+3. **Scriptlets.** The web extension runs set-constant, json-prune, abort-on-property-read, abort-on-property-write, remove-node-text, prevent-fetch, and prevent-xhr, only with a domain. `abort-current-inline-script` is still dropped.
+4. **Procedural cosmetics.** `:has` becomes a page style. `:has-text` and `:upward` run in script. A MutationObserver watches new nodes for about twenty seconds. There is no global “hide any text that says Ad”.
+5. **More lists.** RU AdList fits as its own blocker. AdGuard Base and the uBlock unbreak list are not in this build. Cookie notices are a short original list, off until you turn them on.
+6. **Regression.** `node scripts/regression.mjs` opens a fixture in headless Chrome, counts visible ad slots, and looks at rifme.net. That is not Safari, and it does not replace watching YouTube and maps yourself.
 
-Порядок такой, потому что каждый следующий пункт открывает целый класс рекламы из каталога, а не один сайт.
-
-1. **Русские сайты.** В коде: отдельный блокировщик QuietSafari Russian, RU AdList (CC BY 3.0, advblock) и свои правила на `yandex.ru/ads`, `an.yandex.ru`, `yabs.yandex.ru`, Adfox, `yandex_rtb`. Поиск, карты и главная не запрещаются. Метрика `mc.yandex.ru` добавляется в список приватности. На Mac это ещё не проверено: rifme.net без карточек «РЕКЛАМА», `yandex.ru/maps` открывается.
-2. **Строка статуса.** В коде: если Safari молчит дольше двенадцати секунд, строка становится «выключено» и окно отсылает к разделу README про две копии. Ошибка Safari тоже не оставляет «ещё не проверено». На Mac это ещё не проверено.
-3. **Скриптлеты в веб-расширении.** В коде работает короткий набор: set-constant, json-prune, abort-on-property-read, abort-on-property-write, remove-node-text, prevent-fetch, prevent-xhr. Берутся только правила с доменом. `abort-current-inline-script` по-прежнему выбрасывается: он чаще ломает сайт, чем рекламу. Стены «отключите блокировщик» закрываются только если в списке есть подходящее правило этого набора.
-4. **Процедурная косметика.** В коде: `:has` превращается в обычный стиль страницы, `:has-text` и `:upward` обрабатывает скрипт, наблюдатель смотрит новые блоки около двадцати секунд. Только с доменом или для известных контейнеров вроде `yandex_rtb`. Общего правила «спрятать всё, где написано Реклама» нет.
-5. **Ещё списки.** RU AdList влез отдельным блокировщиком. AdGuard Base и список исключений uBlock в эту сборку не вошли: у них часто GPL, и полный файл не проверен на размер. Куки-окна — свой короткий список и выключатель, выключенный по умолчанию, не чужой список раздражителей.
-6. **Автоматическая сетка.** `node scripts/regression.mjs` открывает проверочную страницу в headless Chrome, считает видимые рекламные блоки и отдельно смотрит rifme.net. Это не Safari и не заменяет ваш просмотр YouTube и карт.
-
-Не делаем, приёма нет: реклама, вклеенная в видео на сервере; эфир, где реклама в том же потоке; реклама не в Safari; заказная статья; рекламные строки на странице самого поиска.
+Out of scope, because there is no safe method: ads stitched into the video on the server, a live stream where the ad is the same flow, ads outside Safari, sponsored articles, and ads on the search page itself.

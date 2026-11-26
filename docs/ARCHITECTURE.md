@@ -1,211 +1,139 @@
-# QuietSafari — как это устроено
+# How QuietSafari is built
 
-Этот текст для вас, владельца. Здесь нет задания «напишите код». Здесь — из чего состоит блокировщик, почему выбраны именно эти части Safari и что будет, когда YouTube в очередной раз поменяет страницу.
+This is for the person who runs the app. It is what the blocker is made of, why those Safari pieces were chosen, and what happens when YouTube changes its page.
 
-QuietSafari — приложение для Mac. Оно живёт в Dock, показывает окно настроек и содержит внутри себя два дополнения Safari. Отдельно дополнение поставить нельзя: Apple требует, чтобы оно лежало внутри обычного приложения.
+QuietSafari is a Mac app. It shows a settings window and contains the Safari extensions. Apple requires the extensions to live inside a normal app.
 
-Откройте проект в Xcode, нажмите Run и проверьте проверочную страницу, обычный сайт, ролик на YouTube и rifme.net. Списки EasyList, EasyPrivacy и RU AdList уже встроены и обновляются кнопкой. Что ещё впереди — в [дорожной карте](ROADMAP.md).
+Open the project in Xcode, press Run, and check the test page, a normal site, a YouTube video, and rifme.net. EasyList, EasyPrivacy, and RU AdList are already built in and update from the button. What is next is in the [roadmap](ROADMAP.md).
 
-## Что стоит в Xcode
+## What is in Xcode
 
-Три цели (targets). В окне проекта они слева, под надписью TARGETS:
+Five targets:
 
-| Цель | Что это | Идентификатор |
+| Target | What it is | Identifier |
 | --- | --- | --- |
-| QuietSafari | Окно настроек | `com.quietsafari.macos` |
-| QuietSafariExtension | Веб-расширение Safari | `com.quietsafari.macos.extension` |
-| QuietSafariContentBlocker | Блокировщик контента Safari | `com.quietsafari.macos.content-blocker` |
+| QuietSafari | Settings window | `com.quietsafari.macos` |
+| QuietSafariExtension | Safari web extension | `com.quietsafari.macos.extension` |
+| QuietSafariContentBlocker | Content blocker, EasyList | `com.quietsafari.macos.content-blocker` |
+| QuietSafariPrivacy | Content blocker, EasyPrivacy | `com.quietsafari.macos.privacy` |
+| QuietSafariRussian | Content blocker, RU AdList and Yandex | `com.quietsafari.macos.russian` |
 
-Минимальная система — macOS 14. Команда разработчика в проект не вписана: свою бесплатную Personal Team вы выбираете в Xcode сами.
+Minimum system is macOS 14. No team id is committed. You pick your free Personal Team in Xcode.
 
-## Почему два расширения, а не одно
+## Why more than one extension
 
-Safari умеет блокировать рекламу двумя разными способами. QuietSafari использует оба, потому что один не заменяет другой.
+Safari blocks ads in two different ways. QuietSafari uses both.
 
-**Блокировщик контента** (Content Blocker) — основной инструмент для всех сайтов.
+**Content blocker.** You give Safari a rule file. Safari decides which address not to load and which piece of the page to hide. The extension does not see which sites you open. Banners, side slots, ad-network requests, and many trackers are handled here. One file has a hard cap, so ads, privacy, and the Russian list are three blockers.
 
-Вы отдаёте Safari файл с правилами. Safari сам, внутри своего движка, решает, какой адрес не загружать и какой кусок страницы спрятать. Наше расширение при этом **не видит**, какие сайты вы открываете. Это быстро и не сажает батарею: правила применяются к каждому запросу без нашего кода.
+**Web extension.** Its script runs on the page. YouTube needs it: the ad arrives from the same host as the video. Blocking that host would stop the film. The script reads the player response and skips the ad. The same extension counts what it can see. A content blocker cannot report hits, or it would know where you went.
 
-Так закрываются баннеры, боковые блоки, запросы к рекламным сетям (DoubleClick и похожие) и часть трекеров.
+Safari’s declarativeNetRequest still compiles into the same content-blocker format and the same cap. The reliable base is the JSON Safari compiles itself. The web extension is for YouTube and for rules that JSON cannot express.
 
-**Веб-расширение** (Web Extension) — для того, чего правила выразить не могут.
+In Safari settings you turn on QuietSafari, Content Blocker, Privacy, and Russian.
 
-Его скрипт работает на странице. Он нужен для YouTube: рекламный ролик приходит с того же адреса, что и обычное видео. Если запретить весь этот адрес, перестанет играть и кино. Скрипт смотрит на плеер и пропускает ролик, не ломая само видео.
+## How the window talks to Safari
 
-Тем же расширением считается счётчик в окне. Блокировщик контента принципиально не сообщает, сколько адресов он оборвал — иначе он узнал бы, куда вы ходите. Счётчик поэтому считает только то, что скрипт увидел на странице: спрятанные блоки и пропущенные ролики.
+The window writes settings and JSON into a shared folder. The content blocker reads the JSON when Safari asks. The web extension writes only a count, not the page address.
 
-Почему не обойтись одним веб-расширением и списком вроде Chrome. У Safari есть режим declarativeNetRequest, но к 2026 году он всё равно превращает правила во внутренний формат блокировщика контента и упирается в тот же потолок. На чужих списках он ведёт себя капризно. Надёжная основа — родной JSON, который Safari компилирует сам. Веб-расширение остаётся для YouTube и для правил, которые в этот JSON не помещаются (скрипты страницы, сложные селекторы).
+On a Personal Team build the folder is the App Group `TEAMID.com.quietsafari.shared`. Xcode fills in `$(TeamIdentifierPrefix)`. The `group.` prefix is a paid capability, so the free team does not use it. An ad-hoc release has no team id, so that container does not exist. Those builds share `~/Library/Application Support/QuietSafari` instead. All targets of a dev build must use the same team, or each gets a different folder.
 
-В настройках Safari вы увидите **два** пункта. Включить нужно оба:
+What each step does:
 
-- **QuietSafari** — скрипты, YouTube, кнопка на панели.
-- **QuietSafari Content Blocker** — сетевые правила и спрятанные элементы.
+1. You flip the switch or add a site. The window writes settings, rebuilds the rule files, and asks Safari to reload them one at a time.
+2. The allowlist is `ignore-previous-rules` appended to every blocker. It only cancels rules inside that blocker.
+3. Turning blocking off writes `[]`. The extension stays enabled, but there are no rules. Reload open pages.
+4. The page script counts hidden elements and tells the app a number. The message does not include the page address.
+5. The window rereads the counter and asks Safari whether the extensions are on.
+6. If the shared folder is missing, the content blocker still serves the JSON shipped inside it. The test page can work. The switch and allowlist cannot, and the window says so.
 
-## Как данные ходят между окном и Safari
+Update filters downloads EasyList, EasyPrivacy, and RU AdList, converts them, and asks Safari to reread the three blockers. With no network, the built-in conversion remains.
 
-```
-Окно QuietSafari
-    пишет настройки и готовый JSON
-            |
-            v
-Общая папка приложений (App Group)
- settings.json      выключатель и белый список, пишет окно
- stats.json         счётчик, пишет расширение
- blockerList.json   правила, пишет окно, читает блокировщик
-            |                          \
-            v                           v
-Блокировщик контента            Веб-расширение
-Safari забирает JSON            скрипт на странице
-и применяет сам.                шлёт в окно только число,
-Адреса страниц                  не адрес сайта
-сюда не приходят.
-```
+## Filter lists and Safari’s limits
 
-Общая папка на Mac называется не `group.…`, а **`КОДКОМАНДЫ.com.quietsafari.shared`**. Код команды — это десять букв вашей Personal Team, Xcode подставляет их сам в строку `$(TeamIdentifierPrefix)`.
+Three rule files. EasyList is Content Blocker, EasyPrivacy is Privacy, RU AdList plus Yandex rules is Russian. Each stays under about 7 MB and under 150,000 rules. A line that would match a normal YouTube watch page, the Google home page, or Yandex search and maps is dropped.
 
-Так сделано специально. Идентификатор с приставкой `group.` Apple считает отдельной платной возможностью, и бесплатная команда часто не может его подписать. Идентификатор с кодом команды macOS выдаёт по самой подписи, без платного аккаунта и без регистрации на сайте Apple. Для будущего iPhone это не подойдёт: там нужна приставка `group.` и платная программа разработчика. Поэтому сейчас только Mac, а имя папки читается из Info.plist — его можно будет сменить в одном месте, не разыскивая по коду.
-
-Все три цели должны быть подписаны **одной и той же** командой. Иначе у каждой получится своя папка, и окно перестанет видеть расширение.
-
-Что делает каждая стрелка:
-
-1. Вы двигаете выключатель или добавляете сайт. Окно записывает `settings.json`, заново собирает `blockerList.json` и просит Safari перечитать правила (`SFContentBlockerManager.reloadContentBlocker`).
-2. Белый список — это не отдельный тумблер в Safari. В конец JSON дописываются правила `ignore-previous-rules` для этих сайтов. Они отменяют предыдущие правила **только внутри этого же блокировщика**. Когда появятся второй и третий блокировщик, тот же список будет дописываться в каждый.
-3. Выключение блокировки записывает пустой список `[]`. Расширение в Safari остаётся включённым, но правил больше нет. Уже открытую страницу нужно обновить.
-4. Скрипт на странице считает спрятанные элементы и один раз за ролик сообщает фону расширения число. Фон вызывает родной обработчик (`SafariWebExtensionHandler`) и тот пишет `stats.json`. В сообщение не кладётся адрес страницы.
-5. Окно раз в пару секунд перечитывает счётчик. Отдельно оно спрашивает Safari, включены ли оба дополнения.
-6. Если общей папки нет (подпись без команды или ошибка App Groups), блокировщик всё равно отдаёт короткий список, вшитый в само расширение. Проверочная страница при этом работает. Выключатель и белый список — нет, окно так и напишет.
-
-Кнопка «Обновить фильтры» скачивает EasyList, EasyPrivacy и RU AdList, переводит их заново и просит Safari перечитать три блокировщика. Если сети нет, остаётся перевод, который уже лежит в приложении.
-
-## Списки фильтров и пределы Safari
-
-В приложении три готовых файла правил. EasyList отдаёт QuietSafari Content Blocker, EasyPrivacy — QuietSafari Privacy, RU AdList и правила Яндекса — QuietSafari Russian. В каждом не больше примерно 7 МБ и меньше 150 000 правил: лишнее косметическое отбрасывается, сетевые правила сохраняются. Строка, которая задела бы обычное видео YouTube, главную Google, поиск или карты Яндекса, в файл не попадает.
-
-Окно само скачивает те же открытые списки:
+The window downloads:
 
 - EasyList — `https://easylist.to/easylist/easylist.txt`
 - EasyPrivacy — `https://easylist.to/easylist/easyprivacy.txt`
 - RU AdList — `https://easylist-downloads.adblockplus.org/advblock.txt`
 
-Формат этих списков — синтаксис Adblock Plus (`||сайт^`, `##селектор`). Safari его не понимает. Конвертер будет на Swift внутри приложения, без Node и без отдельных программ: вам по-прежнему достаточно нажать кнопку в окне.
+Those lists use Adblock Plus syntax. Safari does not. The converter keeps what Safari can express. One bad rule can reject the whole file, so uncertain lines are dropped. WebKit’s url-filter cannot use `|`, so the separator is a character class, not an alternation.
 
-Пример перевода. Строка EasyList `||doubleclick.net^` означает «любой адрес на сайте doubleclick.net и его поддоменах». В JSON Safari это одно правило:
+Not in the content blocker, and handled by the web extension when they fit the named set:
 
-```json
-{
-  "trigger": { "url-filter": "^https?://([^/?#]*\\.)?doubleclick\\.net([:/?#]|$)" },
-  "action": { "type": "block" }
-}
-```
+- page scripts (`##+js`, `#%#//scriptlet`);
+- procedural CSS (`:has-text`, `#?#`);
+- `removeparam`, `csp`, `redirect`.
 
-Строка `example.com##.banner` прячет элемент и становится действием `css-display-none` с `if-domain` `example.com`.
+Cosmetic exceptions (`#@#`) become `unless-domain` on the hide rule. `if-domain` and `unless-domain` cannot share one rule.
 
-Конвертер **выбрасывает**, а не записывает вслепую, всё, в чём он не уверен. Одно кривое правило способно забраковать весь файл, и тогда не работает ничего.
-
-Не попадает в блокировщик контента и уходит в веб-расширение (или в журнал «не смогли перевести»):
-
-- скрипты страницы (`##+js`, `#%#//scriptlet`);
-- расширенный CSS (`:has-text`, `#?#`);
-- правила «вырезать параметр из ссылки», CSP и подмены (`$removeparam`, `$csp`, `$redirect`);
-- слишком длинные и сомнительные выражения.
-
-Исключения «на этом сайте селектор не прятать» (`#@#`) в Safari нет как отдельного действия. Конвертер будет сужать само правило спрятать через `unless-domain`, а не надеяться на отмену задним числом.
-
-Пределы, которые нельзя игнорировать:
-
-- **150 000 правил на один блокировщик.** Это потолок WebKit (`maxRuleCount`). Сверх него файл не компилируется.
-- Рабочий запас — **около 100 000 правил и около 8 МБ** на файл. Формально 150 тысяч разрешены, но большие JSON уже отказывались собираться (на iOS 17 это ломалось и на меньших списках), а сборка съедает память.
-- `if-domain` и `unless-domain` нельзя ставить в одно правило вместе.
-- Одинаковые селекторы надо склеивать в одно правило со списком сайтов, а не плодить копию на каждый сайт. Иначе запас кончится раньше, чем кончится реклама.
-- `ignore-previous-rules` отменяет только правила **этого** блокировщика. Белый список копируется в каждый.
-
-EasyList, EasyPrivacy и RU AdList лежат в трёх блокировщиках, а не в одном файле. Окна про cookie не стали четвёртым блокировщиком: их прячет веб-расширение, и только если выключатель включён. Новый список, который не влезет в свой файл, получит свою цель в Xcode, а не допишется сверх предела.
-
-В шапке скачанного списка написана его лицензия. Её сохраняем и показываем в окне «О фильтрах», а не пересказываем по памяти.
+Cookie notices are not a fourth blocker. The web extension hides a short list only when the switch is on.
 
 ## YouTube
 
-Реклама на YouTube бывает трёх видов, и один приём их не закрывает.
-
-| Что видно | Чем закрываем |
+| What you see | What covers it |
 | --- | --- |
-| Баннер, блок в ленте, шапка над роликом | Правило `css-display-none` и тот же список селекторов в скрипте |
-| Кнопка «Пропустить» и короткий ролик поверх видео | Скрипт страницы: нажать Skip или перемотать ролик короче трёх минут |
-| Реклама в ответе плеера | `youtube-main.js` в мире страницы, с самого начала загрузки: из ответа вырезаются рекламные поля, само видео остаётся |
+| A banner, a feed slot, a masthead | `css-display-none` and the same selectors in the script |
+| Skip, and a short ad over the video | The page script seeks only while an ad is actually showing |
+| Ads inside the player response | `youtube-main.js` strips the ad fields before the player reads them |
 
-Потолок в три минуты — защита. Если класс плеера соврёт и это окажется обычный ролик длиннее трёх минут, скрипт его не перематывает.
+The three-minute cap is a guard. If the player class is wrong and the video is a real one longer than three minutes, the script does not seek it.
 
-Нельзя запрещать домены `youtube.com`, `googlevideo.com` и картинки `ytimg.com`. Проверочный список их не содержит, и проверка проекта это ловит.
+Do not block `youtube.com`, `googlevideo.com`, or `ytimg.com` wholesale. The project check rejects a rule that would.
 
-Весь код, который знает вёрстку YouTube, лежит в одном файле: `Extension/Resources/youtube.js`. Вверху — объект `SELECTORS`. Когда YouTube поменяется, правка делается там и больше нигде. Вы снова нажимаете Run.
+YouTube’s layout lives in `youtube.js` and `youtube-main.js`. When YouTube changes, the edit stays there.
 
-Как понять, что чинить:
+## Settings window
 
-1. Открыть главную YouTube — баннеров в ленте быть не должно.
-2. Открыть ролик — блок над плеером должен исчезнуть, само видео должно играть.
-3. Если ролик начался с рекламы — она должна пропуститься сама или по кнопке.
-4. Если вместо этого пропало нормальное видео или реклама играет до конца, в `SELECTORS` устарели имена. Меняются имена, не вся программа.
+SwiftUI, in English:
 
-Кнопки и классы YouTube меняет часто. Селекторы вроде `ytd-ad-slot-renderer` живут дольше случайных хэшей в class. На них и опираемся. Перехват ответа плеера (этап 3) устойчивее кнопок, но ошибка в нём останавливает нормальное видео, поэтому в каркас он не включён.
+- blocking switch;
+- a counter that does not pretend to include network blocks;
+- an allowlist (`example.com`; `www` is optional);
+- Update filters;
+- Open test page, on this Mac only (`127.0.0.1`);
+- status of the extensions, and whether the shared folder is available;
+- a menu bar panel with the same controls, launch at login, and Hide Dock icon.
 
-## Окно настроек
+The test page uses red AD blocks and one request to `googlesyndication.com`, so you can see both hiding and network blocking. macOS may ask once about incoming connections. The server does not listen outside this computer.
 
-Окно на SwiftUI, по-русски, без лишних экранов:
+## Signing
 
-- выключатель блокировки;
-- счётчик с честной подписью, что сетевые обрывы Safari в него не входят;
-- белый список сайтов (адрес вида `example.com`, `www` можно не писать);
-- кнопка «Обновить фильтры» — пока заново применяет встроенный список;
-- кнопка «Открыть проверочную страницу» — поднимает страницу только на этом компьютере (`127.0.0.1`) и открывает её в Safari;
-- состояние обоих дополнений и доступна ли общая папка.
+- In Xcode, the same Personal Team on every target, Automatically manage signing.
+- The team id is not committed.
+- Builds from Xcode and the ad-hoc release both need Allow Unsigned Extensions. Safari turns that off when it quits.
+- A free profile lasts about seven days. Press Run again when the app will not open.
+- After a new Run, Safari may disable the extensions because the signature changed.
 
-Проверочная страница нарочно с красными блоками «РЕКЛАМА» и одним запросом на `googlesyndication.com`. Так видно, работает ли прятание элементов и работает ли обрыв сети, даже если случайный новостной сайт наш короткий список не задевает. macOS может один раз спросить разрешение на входящие соединения — это только локальная страница, наружу сервер не слушает.
+A downloadable zip without that Safari step needs a paid Developer ID signature and notarization. That is not this release.
 
-Полноценное окно (строка меню, запуск вместе с Mac, экран «о фильтрах», сброс счётчика) — этап 4. Сейчас окно уже настоящее, чтобы было что запустить, но оно ещё не окончательный вид программы.
+## Risks
 
-## Подпись
+- YouTube changes its page. The player logic is in two files. An ad stitched into the video file can flash; the script seeks past it and does not block the video URL.
+- The 150,000-rule cap and large JSON. Lists are split, and doubtful lines are dropped.
+- Some EasyList lines cannot be expressed in Safari. There will not be Firefox-level parity.
+- The counter misses network blocks. That is an Apple limit.
+- A selector that is too wide can hide part of a site. The converter drops dangerous expressions.
+- A free signature expires, and Allow Unsigned Extensions resets. If Run fails on App Groups, the README says which lines to remove.
+- Different teams on the targets, or Sign to Run Locally with no team, leave the shared folder empty. The window says so.
+- Sites with anti-adblock walls are what the allowlist is for.
+- iPhone needs a paid account and a different shared folder. There is no iOS target.
 
-Проект рассчитан на бесплатную подпись:
+## Where things live
 
-- в Xcode у всех трёх целей одна Personal Team и включено «Automatically manage signing»;
-- команда в файлы не записана, чтобы чужой код команды не уехал в git;
-- для сборок из Xcode Safari считает расширение неподписанным для магазина. Нужен пункт «Разрешить неподписанные расширения» в меню «Разработка». Safari **выключает его сам**, когда его полностью закрывают. Это не поломка QuietSafari;
-- бесплатный профиль живёт около семи дней. Когда приложение перестанет открываться, снова нажмите Run;
-- после нового Run Safari иногда сам выключает расширение, потому что подпись сборки изменилась. Включите оба пункта ещё раз.
-
-Постоянная установка без этого пункта — платная подпись Developer ID и нотаризация. Это этап 6, не сейчас.
-
-## Риски
-
-- **YouTube меняет страницу.** Логика ролика собрана в `youtube-main.js` и `youtube.js`. Реклама, вклеенная в сам видеофайл, может мелькнуть: её перематывает запасной скрипт, адрес видео при этом не блокируется.
-- **Потолок 150 000 и капризная сборка больших JSON.** Делим списки на несколько блокировщиков и выбрасываем сомнительные строки, а не запихиваем всё в один файл.
-- **Дыры относительно uBlock.** Часть правил EasyList нельзя выразить в Safari. Веб-расширение закроет часть из них позже, но паритета «как в Firefox» не будет: Safari не отдаёт расширениям те же права.
-- **Счётчик неполный.** Сетевые блокировки в него не входят. Это ограничение Apple, не забытая цифра.
-- **Слишком широкий селектор** может спрятать нужный кусок сайта. Проверочный список поэтому узкий. Конвертер на этапе 2 обязан отбрасывать опасные выражения, а не «включать всё».
-- **Бесплатная подпись.** Семь дней, сброс «неподписанных расширений», иногда отказ именно на App Groups. Если Run падает из‑за App Groups, в README есть точные строки, которые можно убрать. Прятание по встроенному списку после этого остаётся.
-- **Общая папка не совпала.** Разные команды у трёх целей или запуск совсем без команды («Sign to Run Locally» без Team) дают пустую или разную папку. Выключатель тогда не доходит до Safari. В окне это написано прямо.
-- **Сайты с антиблокировщиком** могут просить отключить расширение. Белый список для этого и есть.
-- **iPhone позже.** Потребует платный аккаунт и другой вид общей папки. В этот проект цель для iOS не добавлена, чтобы её не пришлось подписывать сейчас.
-- **Сборку нельзя проверить на машине, где писался этот каркас.** Там нет Xcode. Проект собран генератором и прогнан проверками JSON, манифеста и ссылок внутри `project.pbxproj`, но первым настоящим запуском будет ваш Run.
-
-## Что уже сделано в этой версии
-
-Сделано в коде и ещё не проверено на Mac после этой правки: три списка, кнопка обновления, статус с таймаутом, вырезание рекламы YouTube, скриптлеты и процедурные фильтры в веб-расширении, выключатель окон про cookie.
-
-Дальше по дорожной карте: строка меню, запуск вместе с Mac, автоматические проверки конвертера на Mac и платная подпись.
-
-## Где что лежит
-
-| Путь | Зачем |
+| Path | Why |
 | --- | --- |
-| `App/` | Окно: выключатель, белый список, проверочная страница |
-| `Extension/` | Веб-расширение. Ролики YouTube — `Resources/youtube-main.js` и `youtube.js` |
-| `ContentBlocker/` | EasyList, отдаёт Safari JSON |
-| `Privacy/` | EasyPrivacy, второй блокировщик контента |
-| `Russian/` | RU AdList и правила Яндекса, третий блокировщик |
-| `Shared/` | `blockerList.json`, `privacyList.json`, `russianList.json` |
-| `Config/Shared.xcconfig` | Идентификаторы. Менять, только если Xcode сказал, что они заняты |
-| `docs/` | Устройство, дорожная карта и каталог типов рекламы |
-| `scripts/` | Проверки проекта. Для запуска приложения не нужны |
-| `QuietSafari.xcodeproj` | То, что открывается двойным щелчком |
+| `App/` | Window, menu bar, onboarding, test page |
+| `Extension/` | Web extension, including YouTube |
+| `ContentBlocker/` | EasyList content blocker |
+| `Privacy/` | EasyPrivacy |
+| `Russian/` | RU AdList and Yandex rules |
+| `Shared/` | The three JSON lists |
+| `site/` | The public landing page |
+| `homebrew-tap/` | The cask to copy into `rubpf/homebrew-tap` |
+| `Config/Shared.xcconfig` | Identifiers. Change only if Xcode says they are taken |
+| `docs/` | This file, the roadmap, and the ad-type catalogue |
+| `scripts/` | Project checks and the ad-hoc release build |
+| `QuietSafari.xcodeproj` | What you double-click |

@@ -1,134 +1,128 @@
-# Типы рекламы и что с ними делает QuietSafari
+# Ad types and what QuietSafari does with them
 
-Документ для владельца. Здесь собраны виды рекламы, которые встречаются в браузере в 2026 году, и для каждого сказано: откуда она берётся, чем QuietSafari может её закрыть и что с этим уже сделано.
+This is the catalogue of ads you meet in a browser, how each one is delivered, which QuietSafari mechanism can stop it, and the status in this build.
 
-Статус относится к текущей сборке в этой ветке, не к мечте «как у uBlock». Короткий движок скриптлетов и процедурные фильтры уже в веб-расширении; на Mac их ещё не проверяли. Порядок работ лежит в [дорожной карте](ROADMAP.md).
+Status is for this branch, not for a wish to match uBlock. The short scriptlet engine and procedural filters are in the web extension. The order of work is in the [roadmap](ROADMAP.md).
 
-Четыре слова статуса:
-
-| Статус | Значение |
+| Status | Meaning |
 | --- | --- |
-| сделано | В этой сборке типичный случай такого вида должен пропадать |
-| частично | Часть случаев закрыта, заметная часть ещё нет |
-| запланировано | Способ понятен, в коде его ещё нет |
-| невозможно в Safari | Отдельный запрос или отдельный блок на странице не существует, ломать сайт ради этого нельзя |
-| не блокируем | Это и есть сам сайт или его законное окно, а не чужая вставка |
+| done | A typical case of this kind should disappear in this build |
+| partial | Some cases are covered, a noticeable share is not |
+| planned | The method is clear and not in the code yet |
+| not possible in Safari | There is no separate request or block to remove without breaking the site |
+| not our target | This is the site itself, or a legitimate prompt, not someone else’s insert |
 
-## Чем QuietSafari вообще умеет закрывать рекламу
+## The tools QuietSafari actually has
 
-Сейчас в программе пять приёмов. Не шесть и не двадцать.
+1. **Network rule** in a content blocker. Safari does not load the address. EasyList, EasyPrivacy, and RU AdList are converted into the three blockers. Page scripts, procedural CSS, and unknown options are dropped rather than written blindly.
+2. **Cosmetic rule.** The same blocker hides an element with `display: none`. The selector has to be simple. `:has` in that JSON is not reliable, so procedural forms go to the web extension.
+3. **Page script** in the web extension. A short selector list, YouTube, and the named scriptlets.
+4. **Response pruning.** `youtube-main.js` strips ad fields from the player JSON before the player reads them.
+5. **Allowlist.** A site you add cancels rules inside the content blockers.
 
-1. **Сетевое правило** блокировщика контента. Safari сам не загружает адрес. Так работают EasyList и EasyPrivacy, уже вшитые в два расширения: QuietSafari Content Blocker и QuietSafari Privacy. В файл попадает только то, что Safari умеет выразить. Скрипты страницы (`##+js`, `#%#//scriptlet`), расширенный CSS (`:has`, `:has-text`) и незнакомые параметры правила выбрасываются, а не записываются вслепую.
-2. **Косметика** — то же расширение прячет элемент стилем `display: none`. Селектор должен быть простым. `:has` и «спрячь блок, внутри которого написано РЕКЛАМА» Safari в этом формате не выполняет.
-3. **Скрипт на странице** веб-расширения. Умеет смотреть на уже загруженную страницу. Сейчас так сделаны только короткий общий список селекторов и YouTube.
-4. **Вырезание полей из ответа** — скрипт в мире страницы перехватывает `JSON.parse` и `fetch` и удаляет рекламные поля до того, как их прочитает плеер. Сейчас это только YouTube (`youtube-main.js`).
-5. **Белый список.** Адрес, который вы добавили в окне, отменяет правила внутри блокировщиков контента. Это запасной выход, если сайт сломался.
+Not here: the full uBlock scriptlet set (including abort-current-inline-script), AdGuard filters, and the uBlock unbreak list. Here: RU AdList as its own blocker, Yandex rules, the short scriptlet engine, `:has` / `:has-text` / `:upward`, a MutationObserver for late nodes, and a cookie-notice switch that is off until you turn it on.
 
-Чего нет: полного набора скриптлетов uBlock (в том числе abort-current-inline-script), фильтров AdGuard и списка исключений uBlock, общего правила «спрятать любой текст Реклама». Есть: RU AdList отдельным блокировщиком, свои правила Яндекса, короткий движок скриптлетов, `:has` / `:has-text` / `:upward`, наблюдатель за новыми блоками, выключатель окон про cookie (выключен, пока его не включат).
+Safari’s cap is 150,000 rules per blocker, and a large file can take a long time to compile. Lists are split instead of piled into one file.
 
-Лимит Safari: не больше 150 000 правил на один блокировщик, а большой файл Safari иногда долго компилирует и перестаёт отвечать окну программы. Поэтому списки режутся и раскладываются по нескольким расширениям, а не сваливаются в один.
+## Summary
 
-## Сводка
-
-| Вид | Как приходит | Чем закрывать | Сейчас |
+| Kind | How it arrives | What can stop it | Now |
 | --- | --- | --- | --- |
-| Обычный баннер (картинка, HTML, липкая полоса) | Чужой адрес или блок с известным id/классом | Сеть + простая косметика | частично |
-| Медиа Rich Media, растягивающийся баннер | Скрипт рекламной сети рисует блок поверх страницы | Сеть, чтобы скрипт не пришёл; косметика для оболочки | частично |
-| Нативная карточка в ленте и внутри статьи | Вёрстка как у текста сайта, часто с пометкой «Реклама» | Косметика по контейнеру; сеть, если карточки грузит чужой скрипт | частично |
-| Рекомендации «вам понравится» (Taboola, Outbrain, MGID) | Виджет внизу статьи, свой домен | Сеть + косметика | частично |
-| Видео до / в середине / после ролика, плеер сам запрашивает ролик (VAST) | Отдельный запрос к рекламному серверу или JSON с полями рекламы | Вырезание JSON, сеть на рекламный SDK, запасной пропуск короткого ролика | частично, YouTube сделан отдельно |
-| Реклама, вклеенная в само видео на сервере (SSAI) | Один поток с роликом, отдельного адреса нет | Нет безопасного приёма | невозможно в Safari |
-| Видео вне плеера: в статье, в углу, липкое | Свой плеер в блоке страницы, часто автозапуск | Сеть на плеер рекламы + косметика контейнера | частично |
-| Соседний баннер рядом с роликом | Отдельный блок на странице просмотра | Косметика | частично, на YouTube спрятаны известные блоки |
-| Всплывающее окно | `window.open` или загрузка с типом popup | Сетевое правило с типом popup; скриптлет, если окно открывает свой код сайта | частично |
-| Окно под текущим (popunder) и реклама в новой вкладке | Щелчок по странице открывает вкладку сзади | Скриптлет на `window.open` | запланировано |
-| Полноэкранная прослойка между страницами | Слой на весь экран, часто свой скрипт | Косметика + скриптлет | частично |
-| Липкая шапка, подвал, «уголок» | Блок с фиксированным положением | Косметика | частично |
-| Просьба разрешить уведомления, если за ней рекламная сеть | Скрипт подписки до системного вопроса | Сеть на домен сети | частично |
-| Уже выданное системное уведомление | Его показывает macOS, не страница | Расширение Safari это уведомление не снимает | невозможно в Safari |
-| Стена «отключите блокировщик» | Скрипт проверяет, что реклама не скрыта, и закрывает сайт | Скриптлет set-constant или abort-on-property-read, только если в списке есть домен | частично |
-| Реклама в поиске Google, Яндекса, Bing | Это часть страницы поиска, помечена «Реклама» | Отдельного чужого адреса часто нет | не блокируем на самой странице поиска |
-| Реклама поисковой сети на чужом сайте | Скрипт `yandex.ru/ads`, AdSense | Сеть на этот скрипт + контейнер `yandex_rtb` / Adfox | сделано для Яндекса на чужом сайте; поиск и карты Яндекса не трогаем |
-| Продвигаемые посты VK, Facebook, Instagram, X, Reddit | Лента самой соцсети | Косметика и скриптлет по разметке ленты | запланировано |
-| Ролики YouTube | JSON плеера с того же домена, иногда склейка внутри файла | Вырезание полей JSON и пропуск короткого ролика | частично |
-| Twitch, прямой эфир со вклеенной рекламой | Реклама в том же потоке, что и эфир | Как SSAI | невозможно в Safari без поломки эфира |
-| Партнёрские ссылки и редирект «сначала реклама, потом файл» | Цепочка адресов, часто с известным трекером | Сеть на трекер; редирект, зашитый в кнопку сайта, скриптлетом | частично |
-| Куки и окна согласия | Свой слой сайта или чужой скрипт согласия | Короткий свой список, выключатель выключен по умолчанию | сделано как выключатель, не полный список раздражителей |
-| Реклама внутри другого приложения и его встроенного браузера | Это не окно Safari | Расширение Safari туда не ставится | невозможно в Safari |
-| Заказная статья на сайте издателя | Это страница сайта, её заказали как текст | Прятать её значит вырезать материал | не блокируем |
-| Счётчики и пиксели (Метрика, двойной щелчок без баннера) | Маленький запрос, страницу не рисует | EasyPrivacy | частично |
-| Реклама, притворяющаяся чужим доменом через CNAME | Адрес выглядит как поддомен сайта | Скриптлет или список конкретных поддоменов; общий запрет домена сломает сайт | запланировано точечно |
+| Ordinary banner | A third-party URL or a known id/class | Network + simple cosmetic | partial |
+| Rich media, expanding banner | An ad script draws over the page | Block the script; hide the shell | partial |
+| Native card in a feed or article | Markup that looks like the article | Cosmetic on the container; network if a third party loads it | partial |
+| “You may like” widgets (Taboola, Outbrain, MGID) | A widget with its own domain | Network + cosmetic | partial |
+| Pre-roll, mid-roll, post-roll the player requests (VAST) | A separate request or JSON ad fields | JSON pruning, block the ad SDK, seek a short ad | partial; YouTube is separate |
+| Ad stitched into the video on the server (SSAI) | One stream, no separate URL | No safe method | not possible in Safari |
+| Outstream, corner, sticky video | A player in a page block | Network on the ad player + cosmetic | partial |
+| Companion banner beside a video | A separate block on the watch page | Cosmetic | partial; known YouTube blocks are hidden |
+| Popup | `window.open` or a popup load | A popup network rule; a scriptlet if the site opens it | partial |
+| Popunder and new-tab ads | A click opens a tab behind | A scriptlet on `window.open` | planned |
+| Full-screen interstitial | A layer, often its own script | Cosmetic + scriptlet | partial |
+| Sticky header, footer, corner | A fixed block | Cosmetic | partial |
+| A prompt to allow notifications, from an ad network | A subscribe script | Block that network | partial |
+| A notification macOS already showed | Drawn by the system, not the page | A Safari extension cannot dismiss it | not possible in Safari |
+| “Disable your ad blocker” wall | A script checks that the ad is visible | set-constant or abort-on-property-read, only with a domain in the list | partial |
+| Ads in Google, Yandex, or Bing search | Part of the search page | Often no third-party URL | not our target on the search page itself |
+| That network’s ads on someone else’s site | `yandex.ru/ads`, AdSense | Block the script and the `yandex_rtb` / Adfox container | done for Yandex on other sites; search and maps are left alone |
+| Promoted posts on VK, Facebook, Instagram, X, Reddit | The network’s own feed | Cosmetic and a scriptlet for that feed | planned |
+| YouTube ads | Player JSON on the same host, sometimes stitched into the file | Strip JSON fields and skip a short ad | partial |
+| Twitch, live video with a stitched ad | The ad is the same stream | Same as SSAI | not possible in Safari without breaking the stream |
+| Affiliate links and “ad, then the file” redirects | A chain of known trackers | Block the tracker; a scriptlet if the site rewrites the click | partial |
+| Cookie and consent prompts | The site’s own layer, or a consent script | A short list, switch off by default | done as a switch, not a full annoyance list |
+| Ads inside another app’s browser | Not a Safari window | A Safari extension is not installed there | not possible in Safari |
+| A sponsored article | The publisher’s own page | Hiding it would remove the article | not our target |
+| Counters and pixels (Metrica, a tracker with no banner) | A small request | EasyPrivacy | partial |
+| An ad hiding behind a CNAME | The address looks like the site | A specific subdomain list; blocking the whole site would break it | planned, case by case |
 
-Дальше то же самое словами, где одной строки мало.
+## Banners and networks such as Google
 
-## Баннеры и сети вроде Google
+A banner is a rectangle, a top bar, or a sticky side block. It loads from another host (DoubleClick, AdSense, GPT, an exchange) or a script draws it into a predictable node (`ins.adsbygoogle`, `div[id^="div-gpt-ad"]`, `google_ads_iframe`).
 
-Обычный баннер — прямоугольник, полоса сверху, липкий блок сбоку. Его либо грузят с чужого адреса (DoubleClick, AdSense, GPT, рекламная биржа), либо рисуют скриптом в блок с предсказуемым именем (`ins.adsbygoogle`, `div[id^="div-gpt-ad"]`, `google_ads_iframe`).
+EasyList’s network rules are those addresses. A simple cosmetic rule hides the shell if the address never arrived and an empty box remains. That is in this build, so side banners disappear on many sites. It is not every banner: a scriptlet or a `:has` rule never entered the content-blocker file.
 
-Сетевые правила EasyList как раз про эти адреса. Простая косметика прячет оболочку, если адрес уже не загрузился, а пустой блок остался. Это уже в сборке, поэтому на многих английских сайтах боковые баннеры пропадают. Это не «все баннеры мира»: правило со скриптом или с `:has` в файл не попало.
+The in-app test page is this case: a red `adsbygoogle` block and a request to `googlesyndication.com`.
 
-Проверочная страница в окне программы как раз про этот вид: красный блок `adsbygoogle` и запрос к `googlesyndication.com`.
+## Native ads, recommendation widgets, Yandex
 
-## Нативная реклама, рекомендации, РСЯ
+A card that looks like an article sits in the feed or between paragraphs. Below the story there is often a “read next” grid from Taboola, Outbrain, MGID, or Revcontent. They have their own domains. EasyList knows many of them, so some of those grids are already blocked on the network.
 
-Карточка «как статья» стоит в ленте или между абзацами. Снизу материала бывает сетка «читайте также» от Taboola, Outbrain, MGID, Revcontent. У них свои домены, EasyList их знает, поэтому часть таких сеток уже режется сетью.
+Yandex’s ad network and Adfox are different. On a page such as rifme.net there is an empty `div id="yandex_rtb_…"`. The script `https://yandex.ru/ads/system/context.js` fills it with cards. The pictures may then load from the advertiser, not from Yandex. Hiding every third-party image would break something useful. Hide the `yandex_rtb` / `adfox` container, and do not load `/ads/`.
 
-Рекламная сеть Яндекса (РСЯ) и Adfox устроены иначе. На странице, например на rifme.net, лежит пустой блок `div id="yandex_rtb_…"`. Скрипт `https://yandex.ru/ads/system/context.js` дорисовывает в него карточки со словом «РЕКЛАМА» (знакомства, облако, и так далее). Картинки при этом могут грузиться уже с сайта рекламодателя, а не с Яндекса. Если спрятать только чужие картинки, сломается что-то полезное. Прятать нужно контейнер `yandex_rtb` / `adfox` и не пускать скрипт `/ads/`.
+RU AdList (advblock, CC BY 3.0) contains `div[id^="yandex_rtb"]` and rules for `an.yandex.ru`. QuietSafari Russian ships that list, plus a few hand-written rules so those containers and hosts are covered even if the list moves.
 
-Этого в текущих EasyList и EasyPrivacy нет как отдельной гарантии. RU AdList (файл advblock, лицензия CC BY 3.0, его можно включить с указанием авторов) как раз содержит `div[id^="yandex_rtb"]` и правила на `an.yandex.ru`. Его ещё нет в сборке. Это первый пробел для русских сайтов.
+Search, maps, and the Yandex home page are different. Blocking `yandex.ru` or `ya.ru` wholesale would remove search and maps. Only the ad paths (`/ads/`, `/an/`) and the ad hosts (`an.yandex.ru`, `yabs.yandex.ru`, `adfox.yandex.ru`) are blocked. The Metrica counter `mc.yandex.ru` is not a banner. It belongs on the privacy list. The web extension also hides `yandex_rtb` and `adfox` if the page inserts them after load.
 
-Отдельно: поиск, карты и главная Яндекса. Адрес `yandex.ru` и `ya.ru` целиком запрещать нельзя, иначе пропадут поиск и карты. Запрещается только путь рекламы (`/ads/`, `/an/`) и отдельные рекламные хосты (`an.yandex.ru`, `yabs.yandex.ru`, `adfox.yandex.ru`). Счётчик Метрики `mc.yandex.ru` — это не баннер, его место в списке приватности. Контейнеры `yandex_rtb` и `adfox` прячет и список RU AdList, и веб-расширение, если блок дорисовали после загрузки.
+The same split applies to VK and Mail.ru: an ad script and a pixel can be blocked. The whole social network cannot.
 
-То же различие у VK и Mail.ru: рекламный скрипт и пиксель можно резать, всю соцсеть — нет.
+## Video
 
-## Видео
+If the player asks for an ad as its own request, or puts the ad in JSON next to the film, that is a client-side insert. It can be stripped from the JSON, or the ad SDK (IMA, VAST) can be blocked. YouTube in this build works that way: `youtube-main.js` removes `adPlacements`, `playerAds`, and `adSlots` before the player starts, and `youtube.js` hides the banners around it and seeks a short ad when the player says one is showing. A normal video longer than three minutes is not seeked because of that. `googlevideo.com` is not blocked: the film arrives from there too.
 
-Если плеер сам спрашивает рекламный ролик отдельным запросом или кладёт описание рекламы в JSON рядом с описанием фильма, это клиентская вставка. Её можно вырезать из JSON или не пустить скрипт рекламного SDK (IMA, VAST). YouTube в этой сборке идёт этим путём: `youtube-main.js` убирает `adPlacements`, `playerAds`, `adSlots` до старта плеера, а `youtube.js` прячет баннеры вокруг и перематывает короткий ролик, если класс плеера говорит, что идёт реклама. Обычный ролик длиннее трёх минут из-за этой перемотки не трогается. Домен `googlevideo.com` не запрещается: по нему приходит и кино.
+If the server already joined the ad and the film into one stream (SSAI, some live streams, some Twitch layouts, some streaming plans), the browser receives one address. An extension cannot cut “the ad seconds” out of it without cutting the picture. That is a limit of Safari and of any request blocker. Seeking a short marked segment is only reasonable where the player honestly labels the ad. A live stream often does not.
 
-Если сервер уже склеил рекламу и фильм в один поток (SSAI, типично для части эфиров, Twitch в некоторых схемах, рекламных тарифов стриминга), в браузер приходит один адрес. Выкинуть из него «рекламные секунды» расширение не может, не выкинув и картинку. Это предел Safari и любого блокировщика запросов. Запасной пропуск короткого куска уместен только там, где плеер честно помечает рекламу классом. На живом эфире так часто нет.
+Video in the article and a sticky player in the corner are usually their own block. Block the player if it is a third party, and hide the container. YouTube’s companion banner uses known tags such as `ytd-companion-slot-renderer`.
 
-Видео в тексте статьи и липкий плеер в углу — обычно отдельный блок. Его закрывают сетью (если плеер чужой) и косметикой контейнера. Соседний баннер у ролика YouTube прячется известными тегами (`ytd-companion-slot-renderer` и похожие).
+## Windows, interstitials, notifications
 
-## Окна, прослойки, уведомления
+Safari can mark a popup load. EasyList rules of that kind, when they converted, already block. A popunder the site opens on click and hides behind the current tab is not always a popup load. That needs a scriptlet on `window.open`. It is not in the named set yet.
 
-Всплывающее окно Safari умеет помечать типом popup. Такие правила из EasyList, если они перевелись, уже блокируются. Окно, которое сайт открывает своим скриптом в момент щелчка и прячет под текущее (popunder), тип popup ловит не всегда. Нужен скриптлет на `window.open`. Его нет.
+A full-screen layer and a sticky footer are cosmetic if the block has a stable name. A random class will not be guessed until a filter list adds it.
 
-Полноэкранная прослойка и липкий низ — косметика, если у блока устойчивое имя. Имя вида «случайный набор букв» список не угадает, пока его не добавят в фильтр.
+A “please allow notifications” prompt lives in a page script. If it is a known ad network, that address is blocked. A system notification you already allowed is drawn by macOS. A Safari extension cannot remove it.
 
-Просьба «разрешите уведомления» живёт в скрипте на странице. Если это известная рекламная сеть, её адрес режется. Системное уведомление, которое вы уже разрешили, рисует macOS. Расширение Safari его не удаляет.
+## Anti-adblock walls
 
-## Стена против блокировщика
+The site checks that the ad block is not hidden, or that a known variable is not “ads off”, and replaces the article with a wall. The fix is a small script: change the check’s answer, or stop a property from being read. AdGuard and uBlock lists have thousands of `##+js(...)` rules. A Safari content blocker cannot run those. The web extension runs a short named set, only with a domain. `abort-current-inline-script` is still dropped because it breaks sites more often than it removes a wall. The allowlist is the way out if a site breaks.
 
-Сайт проверяет, что рекламный блок не скрыт или что известная переменная не равна «реклама выключена», и вместо статьи показывает заглушку. Лечится маленьким скриптом: подменить ответ проверки или не дать прочитать свойство. В списках AdGuard и uBlock это тысячи правил `##+js(...)`. В Safari блокировщик контента так не умеет (запрос к Apple на тип действия «scriptlet» до сих пор не способ, которым Safari применяет правила). Это работа веб-расширения, и её ещё нет. Делать её надо узко: одно правило на один сайт, и белый список, если сайт после этого ломается. Иначе «очень сильный» блокировщик начинает прятать сами статьи.
+## Search, feeds, sponsored articles
 
-## Поиск, ленты, заказная статья
+An ad above Google or Yandex results is the search product. It is drawn by the same page as the real links. Hiding it by the word “Ad” easily hits a real result. QuietSafari does not try. The same network’s script on someone else’s site is a target. See the Yandex section.
 
-Объявление над результатами Google или Яндекса — это продукт поисковика. Оно нарисовано той же страницей, что и обычные ссылки. Вырезать его можно только косметикой по пометке «Реклама», и легко задеть настоящую выдачу. В QuietSafari это сознательно не цель. Рекламный скрипт той же сети на чужом сайте — цель, см. раздел про РСЯ.
+A promoted post in VK, Facebook, Instagram, X, or Reddit looks like a normal post. There is no third-party host. It needs cosmetic rules and a scriptlet for that feed, and those go stale with the layout. Planned, without a promise of matching the uBlock app on Firefox.
 
-Продвигаемый пост в ленте VK, Facebook, Instagram, X или Reddit выглядит как обычный пост. Чужого домена нет. Нужны косметика и скриптлет именно этой ленты, и они устаревают вместе с вёрсткой. Запланировано после скриптлетов, без обещания «как в приложении uBlock на Firefox».
+A sponsored article the publisher ran as a story is the site’s content. It is not hidden.
 
-Заказная статья, которую редакция поставила как материал, — контент сайта. Её не прячем.
+## Affiliate links
 
-## Партнёрские ссылки
+A download button sometimes goes through a chain of other addresses. A known tracker is blocked on the network. If the site rewrites the click in its own script, that needs a scriptlet. Part of this is already covered. The rest is planned.
 
-Кнопка «скачать» иногда ведёт через цепочку чужих адресов. Известный трекер режется сетью. Если сайт сам подменяет переход своим скриптом, нужен скриптлет. Частично уже сейчас, остальное запланировано.
+## Cookies and consent
 
-## Куки и согласия
+A “we use cookies” banner is annoying, and it is often a requirement of the site rather than an ad network. QuietSafari has a short list of known banners and a switch that is off by default. A general annoyance list (share buttons, autoplay) is not included. Those lists have different licenses. Check an AdGuard file’s header before shipping it. It is often GPL.
 
-Окно «мы используем cookie» мешает, но часто это не рекламная сеть, а требование сайта. В QuietSafari для этого свой короткий список известных баннеров и выключатель, выключенный по умолчанию. Общий список раздражителей (кнопки «поделиться», автовоспроизведение) не подключён. Лицензия у таких списков разная: перед AdGuard надо сверять шапку файла, часто это GPL.
+## Where Safari cannot reach
 
-## То, куда Safari не дотягивается
+A browser built into another app, mail, or an ad inside a game. QuietSafari lives in Safari on the Mac. Even a “Safari” view inside another app does not receive these rules.
 
-Встроенный браузер в чужом приложении, почта, реклама внутри игры. Расширение QuietSafari живёт только в Safari на Mac. Даже если это «сафари внутри приложения» через свой движок, наши правила туда не подставляются.
+Video with the ad already stitched in on the server is covered above.
 
-Реклама, склеенная с видео на сервере, — см. выше.
+## What to do next
 
-## Что делать дальше, по убыванию пользы
+The roadmap items for Russian lists, status, scriptlets, procedural filters, the cookie switch, and the regression harness are in this build. On a Mac they still need a look. After that, if sites still work:
 
-Пункты 1–6 дорожной карты в этой сборке написаны. На Mac их ещё нужно пройти руками. Дальше, если сборка не сломала сайты:
+1. AdGuard Base and the uBlock unbreak list, only after the license in the file header is checked and the file fits in its own blocker.
+2. Do not turn on abort-current-inline-script as a batch. It stops other people’s page code and breaks sites. Use it one site at a time, only if a wall will not come down otherwise.
+3. More live pages in `scripts/regression.mjs`. Today it has a fixture and, if the site loads, rifme.net. YouTube and maps are checked in Safari on a Mac, not in that script.
 
-1. AdGuard Base и список исключений uBlock — только после сверки лицензии в шапке и проверки, что файл влезает в новый блокировщик, а не в уже полный EasyList.
-2. Скриптлет abort-current-inline-script не включать пачкой: он обрывает чужой код страницы и легко ломает сайт. Только точечно, если без него стена «отключите блокировщик» не снимается.
-3. Больше живых страниц в `scripts/regression.mjs`. Сейчас там проверочная страница и, если сайт открылся, rifme.net. YouTube и карты в эту автоматическую проверку не входят: их смотрит Safari на Mac.
-
-Не в этом списке, потому что приёма нет: SSAI и вклеенный эфир, реклама вне Safari, заказная статья, рекламная выдача на странице самого поиска.
+Not on this list, because there is no safe method: SSAI and a stitched live stream, ads outside Safari, a sponsored article, and the ads on the search page itself.

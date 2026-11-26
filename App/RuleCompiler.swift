@@ -9,9 +9,9 @@ enum RuleCompiler {
         var errorDescription: String? {
             switch self {
             case .unreadable:
-                return "Не удалось прочитать встроенный список правил."
+                return "Could not read the built-in rule list."
             case .notAnArray:
-                return "Встроенный список правил повреждён."
+                return "The built-in rule list is damaged."
             }
         }
     }

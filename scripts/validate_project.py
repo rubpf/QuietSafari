@@ -320,7 +320,7 @@ def check_identifiers() -> None:
         if needle not in swift:
             fail(f"fallback bundle id missing: {needle}")
     page = (ROOT / "App" / "TestPage.html").read_text(encoding="utf-8")
-    for needle in ("adsbygoogle", "google_ads_iframe_1", "div-gpt-ad-banner", "Этот блок должен быть виден"):
+    for needle in ("adsbygoogle", "google_ads_iframe_1", "div-gpt-ad-banner", "This paragraph should stay visible"):
         if needle not in page:
             fail(f"test page missing {needle}")
 

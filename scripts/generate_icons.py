@@ -14,9 +14,37 @@ APPICON = ROOT / "App" / "Assets.xcassets" / "AppIcon.appiconset"
 ACCENT = ROOT / "App" / "Assets.xcassets" / "AccentColor.colorset"
 IMAGES = ROOT / "Extension" / "Resources" / "images"
 
-GREEN = (168, 196, 154)
+# Sampled from the chosen logo, not an approximation.
+GREEN = (200, 208, 181)
 WHITE = (255, 255, 255)
 INK = (20, 20, 20)
+CORNER_RATIO = 0.1516
+# Leaf outline traced from the reference image, normalized to the rounded square.
+LEAF = [
+    (0.72736, 0.25295), (0.72933, 0.25492), (0.72933, 0.36909), (0.72736, 0.37106),
+    (0.72736, 0.38878), (0.72539, 0.39075), (0.72539, 0.41831), (0.72146, 0.42815),
+    (0.72146, 0.44587), (0.71752, 0.45571), (0.71752, 0.46752), (0.71358, 0.47736),
+    (0.71358, 0.4872), (0.70965, 0.49508), (0.70965, 0.50689), (0.70571, 0.5128),
+    (0.70571, 0.5187), (0.70177, 0.52264), (0.70177, 0.53051), (0.69783, 0.53839),
+    (0.69783, 0.54626), (0.68996, 0.55807), (0.68602, 0.57382), (0.67028, 0.60531),
+    (0.67028, 0.60925), (0.66043, 0.62697), (0.6565, 0.63091), (0.65256, 0.64075),
+    (0.63287, 0.66634), (0.63091, 0.67224), (0.62697, 0.67421), (0.62697, 0.67618),
+    (0.61122, 0.69193), (0.61122, 0.6939), (0.59154, 0.71161), (0.58366, 0.72146),
+    (0.57185, 0.72933), (0.56398, 0.73917), (0.54232, 0.75492), (0.49508, 0.78248),
+    (0.4872, 0.78445), (0.47736, 0.79035), (0.43406, 0.80807), (0.36319, 0.82579),
+    (0.3002, 0.8376), (0.28248, 0.8376), (0.28051, 0.81398), (0.27854, 0.81201),
+    (0.27657, 0.77067), (0.27461, 0.7687), (0.27461, 0.72736), (0.27264, 0.72539),
+    (0.27264, 0.71161), (0.27461, 0.70965), (0.27461, 0.67618), (0.27657, 0.67421),
+    (0.27854, 0.64469), (0.28248, 0.63484), (0.28248, 0.62303), (0.28642, 0.61319),
+    (0.28642, 0.60531), (0.29035, 0.59941), (0.29035, 0.58957), (0.29232, 0.5876),
+    (0.29429, 0.57776), (0.29823, 0.57382), (0.29823, 0.56398), (0.31004, 0.54035),
+    (0.31004, 0.53445), (0.31791, 0.52264), (0.32382, 0.50689), (0.32776, 0.50295),
+    (0.34547, 0.46949), (0.35335, 0.46161), (0.35728, 0.45177), (0.36713, 0.44193),
+    (0.375, 0.43012), (0.38681, 0.42028), (0.39665, 0.4065), (0.42028, 0.38484),
+    (0.43799, 0.37303), (0.43996, 0.36909), (0.46358, 0.35138), (0.48917, 0.3376),
+    (0.48917, 0.33563), (0.49508, 0.33169), (0.5502, 0.3061), (0.59547, 0.28839),
+    (0.71949, 0.25295),
+]
 
 APP_ICONS = [
     ("icon_16x16.png", "16x16", "1x", 16),
@@ -80,43 +108,72 @@ def composite(dst, src_rgb, src_a: float):
     return (out[0], out[1], out[2], out[3])
 
 
-def leaf_sd(px: float, py: float, size: float) -> float:
-    """Almond leaf. Negative is inside. The tip sits at the upper right, the base at the lower left."""
-    dx = px - size * 0.50
-    dy = py - size * 0.52
-    angle = -0.56
-    cosine = math.cos(angle)
-    sine = math.sin(angle)
-    local_x = dx * cosine - dy * sine
-    local_y = dx * sine + dy * cosine
-    radius = size * 0.40
-    offset = size * 0.18
-    left = math.hypot(local_x + offset, local_y) - radius
-    right = math.hypot(local_x - offset, local_y) - radius
-    return max(left, right)
+def point_in_leaf(px: float, py: float, size: float) -> bool:
+    x = px / size
+    y = py / size
+    inside = False
+    j = len(LEAF) - 1
+    for i, point in enumerate(LEAF):
+        xi, yi = point
+        xj, yj = LEAF[j]
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
 
 
 def render(size: int, kind: str = "color") -> list[list[tuple[int, int, int, int]]]:
-    radius = size * 0.22
-    stroke = max(1.15, size * 0.075)
+    radius = size * CORNER_RATIO
+    mask = [point_in_leaf(x + 0.5, y + 0.5, size) for y in range(size) for x in range(size)]
+    stroke = max(1, int(round(size * 0.055)))
     rows = []
     for y in range(size):
         row = []
         for x in range(size):
-            px = x + 0.5
-            py = y + 0.5
+            inside = mask[y * size + x]
             pixel = (0, 0, 0, 0)
-            distance = leaf_sd(px, py, size)
             if kind == "outline":
-                pixel = composite(pixel, INK, coverage(abs(distance) - stroke * 0.5))
+                if inside:
+                    edge = False
+                    for dy in range(-stroke, stroke + 1):
+                        for dx in range(-stroke, stroke + 1):
+                            nx, ny = x + dx, y + dy
+                            if nx < 0 or ny < 0 or nx >= size or ny >= size or not mask[ny * size + nx]:
+                                edge = True
+                                break
+                        if edge:
+                            break
+                    if edge:
+                        pixel = composite(pixel, INK, 1)
             elif kind == "filled":
-                pixel = composite(pixel, INK, coverage(distance))
+                if inside:
+                    pixel = composite(pixel, INK, 1)
             else:
-                pixel = composite(pixel, GREEN, coverage(sd_round_rect(px, py, size, radius)))
-                pixel = composite(pixel, WHITE, coverage(distance))
+                pixel = composite(pixel, GREEN, coverage(sd_round_rect(x + 0.5, y + 0.5, size, radius)))
+                if inside:
+                    pixel = composite(pixel, WHITE, 1)
             row.append(pixel)
         rows.append(row)
     return rows
+
+
+def icon_svg() -> str:
+    radius = round(1024 * CORNER_RATIO, 2)
+    commands = []
+    for index, (x, y) in enumerate(LEAF):
+        px = round(x * 1024, 2)
+        py = round(y * 1024, 2)
+        commands.append(("M" if index == 0 else "L") + f"{px},{py}")
+    commands.append("Z")
+    path = " ".join(commands)
+    red, green, blue = GREEN
+    fill = f"#{red:02X}{green:02X}{blue:02X}"
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="QuietSafari">\n'
+        f'  <rect width="1024" height="1024" rx="{radius}" fill="{fill}"/>\n'
+        f'  <path fill="#ffffff" d="{path}"/>\n'
+        "</svg>\n"
+    )
 
 
 def chunk(tag: bytes, data: bytes) -> bytes:
@@ -146,6 +203,9 @@ def outputs() -> dict[Path, bytes]:
         return cache[key]
 
     files[ROOT / "App" / "Assets.xcassets" / "Contents.json"] = contents_json({"info": {"author": "xcode", "version": 1}})
+    svg = icon_svg().encode("utf-8")
+    files[ROOT / "App" / "AppIcon.svg"] = svg
+    files[ROOT / "site" / "icon.svg"] = svg
     images = []
     for filename, size_name, scale, pixels in APP_ICONS:
         files[APPICON / filename] = png(pixels)
@@ -171,8 +231,8 @@ def outputs() -> dict[Path, bytes]:
     files[ACCENT / "Contents.json"] = contents_json(
         {
             "colors": [
-                accent_entry("0.369", "0.478", "0.314", "light"),
-                accent_entry("0.659", "0.769", "0.604", "dark"),
+                accent_entry("0.455", "0.494", "0.376", "light"),
+                accent_entry("0.784", "0.816", "0.710", "dark"),
             ],
             "info": {"author": "xcode", "version": 1},
         }

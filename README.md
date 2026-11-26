@@ -1,183 +1,183 @@
 # QuietSafari
 
-Блокировщик рекламы для Safari на Mac. Готовое приложение скачивается без Xcode. Собрать из исходников по-прежнему можно бесплатной Personal Team.
+An ad blocker for Safari on Mac. Download the app, or build it yourself in Xcode with a free Personal Team.
 
-## Установить без Xcode
+## Install without Xcode
 
-Нужен macOS 14 или новее. Платный аккаунт Apple Developer не нужен: сборка подписана ad-hoc, поэтому Safari считает расширения неподписанными.
+macOS 14 or later. No paid Apple Developer account: the release is ad-hoc signed, so Safari treats the extensions as unsigned.
 
-**Сайт.** Когда репозиторий публичный и включены GitHub Pages, страница будет здесь: https://rubpf.github.io/QuietSafari/
+**Site.** After this repository is public and GitHub Pages is enabled, the page is https://rubpf.github.io/QuietSafari/
 
-**Zip с релиза.** На странице релизов скачайте `QuietSafari.zip` (или `QuietSafari.dmg`). Суммы SHA256 лежат рядом в `SHA256SUMS.txt`.
+**Zip.** On the releases page, download `QuietSafari.zip` or `QuietSafari.dmg`. SHA256 sums are in `SHA256SUMS.txt` next to them.
 
-После распаковки macOS может не пускать файл. Один раз уберите карантин:
+macOS may quarantine the file. Clear that once:
 
 ```bash
-xattr -dr com.apple.quarantine /путь/к/QuietSafari.app
+xattr -dr com.apple.quarantine /path/to/QuietSafari.app
 ```
 
-Если система пишет «приложение повреждено»: Системные настройки → Конфиденциальность и безопасность → «Всё равно открыть».
+If macOS says the app is damaged: System Settings → Privacy & Security → Open Anyway.
 
-**Homebrew.** Рецепт лежит в `homebrew-tap/`. Его нужно скопировать в публичный репозиторий `rubpf/homebrew-tap` (инструкция в `homebrew-tap/README.md`). Тогда:
+**Homebrew.** The cask is in `homebrew-tap/`. Copy it into a public `rubpf/homebrew-tap` repository (see `homebrew-tap/README.md`). Then:
 
 ```bash
 brew tap rubpf/tap
 brew install --cask --no-quarantine rubpf/tap/quietsafari
 ```
 
-`--no-quarantine` делает то же, что `xattr` выше.
+`--no-quarantine` is the same step as `xattr` above.
 
-При первом запуске окно само покажет шаги. Коротко: Safari → Настройки → Дополнительно → «Показывать функции для веб-разработчиков», меню «Разработка» → «Разрешить неподписанные расширения», затем четыре галочки: QuietSafari, Content Blocker, Privacy, Russian. Кнопка в окне открывает настройки дополнений Safari.
+The first launch walks through setup. Short version: Safari → Settings → Advanced → Show features for web developers, Develop → Allow Unsigned Extensions, then four checkboxes: QuietSafari, Content Blocker, Privacy, and Russian. A button in the app opens Safari’s extension settings.
 
-Когда Safari полностью закрывают, пункт про неподписанные расширения выключается. Меню QuietSafari тогда пишет: «Safari сбросил разрешение — включить снова».
+Quitting Safari turns Allow Unsigned Extensions off. The QuietSafari menu then says “Safari reset the permission. Turn it on again.”
 
-Сборка из Xcode ниже нужна, только если хотите править проект. Для обычного пользования хватает zip или Homebrew.
+The Xcode steps below are only if you want to change the project.
 
-## Собрать самому в Xcode
+## Build it in Xcode
 
-В приложении уже лежат переведённые списки EasyList, EasyPrivacy и RU AdList. Кнопка «Обновить фильтры» скачивает их заново. На YouTube отдельный скрипт вырезает рекламу из ответа плеера до того, как ролик начнётся, и на всякий случай жмёт Skip. Веб-расширение ещё выполняет короткие скриптлеты из списков и процедурные правила вроде `:has`. Какие виды рекламы чем закрываются: [docs/AD_TYPES.md](docs/AD_TYPES.md). Как устроено и что дальше: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) и [docs/ROADMAP.md](docs/ROADMAP.md).
+The app already includes converted EasyList, EasyPrivacy, and RU AdList. Update filters downloads them again. On YouTube a script removes ads from the player response before playback and presses Skip if one still starts. The web extension also runs a short set of list scriptlets and procedural filters such as `:has`. What each ad type uses: [docs/AD_TYPES.md](docs/AD_TYPES.md). How it is built, and what is next: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
-Списки EasyList и EasyPrivacy принадлежат их авторам и распространяются на условиях CC BY-SA. RU AdList (файл advblock) — на условиях CC BY 3.0. QuietSafari их не переписывает руками: программа переводит поддерживаемые строки в правила Safari и отбрасывает то, что Safari не умеет.
+EasyList and EasyPrivacy belong to their authors and are CC BY-SA. RU AdList (advblock) is CC BY 3.0. QuietSafari does not rewrite them by hand: it converts the lines Safari can express and drops the rest.
 
-## Что понадобится для сборки в Xcode
+## What you need to build in Xcode
 
-- Mac с macOS 14 или новее.
-- Xcode 16 или новее из App Store. При первом запуске Xcode дождитесь, пока он доставит дополнительные компоненты.
-- Обычный Apple ID. Платная программа разработчика не нужна.
+- A Mac with macOS 14 or later.
+- Xcode 16 or later from the App Store. On the first launch, wait until Xcode finishes installing extra components.
+- A normal Apple ID. The paid developer program is not required.
 
-Папку `scripts` запускать не нужно. Проект уже собран, открывается файл `QuietSafari.xcodeproj`.
+You do not need to run anything in `scripts`. Open `QuietSafari.xcodeproj`.
 
-## Открыть и запустить
+## Open and run
 
-1. Распакуйте или склонируйте эту папку на Mac. Не запускайте файл `.app` из папки вручную — его там нет. Приложение создаёт Xcode.
-2. Откройте Xcode → Settings (Настройки) → Accounts (Учётные записи) и добавьте свой Apple ID, если его ещё нет. В списке появится Personal Team — ваше имя с пометкой Personal Team.
-3. В Finder дважды щёлкните `QuietSafari.xcodeproj`.
-4. Если Xcode предложит обновить настройки проекта (Update to recommended settings / «Обновить до рекомендуемых настроек») — нажмите **Perform Changes**. Это безопасно.
-5. Сверху слева, рядом с треугольником Run, должно быть написано **QuietSafari** и **My Mac**. Если нет — выберите их в этих меню.
-6. Слева щёлкните синюю иконку проекта QuietSafari. В центральной колонке откройте TARGETS и по очереди выберите пять целей:
+1. Clone this folder on the Mac. There is no `.app` to double-click here. Xcode creates the app.
+2. Xcode → Settings → Accounts. Add your Apple ID if it is missing. Personal Team is your name with that label.
+3. Double-click `QuietSafari.xcodeproj`.
+4. If Xcode offers to update project settings, click **Perform Changes**.
+5. Next to Run, the menus should say **QuietSafari** and **My Mac**.
+6. Click the blue project icon. Under TARGETS, select each of these five and set the same Personal Team with **Automatically manage signing**:
    - QuietSafari
    - QuietSafariExtension
    - QuietSafariContentBlocker
    - QuietSafariPrivacy
    - QuietSafariRussian
 
-   У каждой откройте вкладку **Signing & Capabilities** (Подпись и возможности). Поставьте галочку **Automatically manage signing** (Управлять подписью автоматически). В меню **Team** (Команда) выберите одну и ту же Personal Team. Команда должна совпадать у всех пяти, иначе окно и Safari не увидят общие настройки.
-7. Нажмите Run (треугольник) или клавиши Command+R.
-8. Если Xcode спросит пароль от связки ключей — это пароль вашего Mac. Введите его и нажмите Always Allow (Всегда разрешать).
-9. Должно открыться окно QuietSafari.
+   The team must match on all five, or the window and Safari will not share settings.
+7. Press Run (Command+R).
+8. If Xcode asks for the keychain password, that is your Mac password. Click Always Allow.
+9. The QuietSafari window should open.
 
-Если Xcode пишет, что идентификатор `com.quietsafari.macos` занят, откройте в Xcode файл `Config/Shared.xcconfig` и замените `com.quietsafari.macos` на что-нибудь своё, например `com.вашеимя.quietsafari`. Сохраните и нажмите Run ещё раз.
+If Xcode says `com.quietsafari.macos` is already in use, edit `Config/Shared.xcconfig` and change that prefix, then Run again.
 
-## Включить в Safari
+## Turn on in Safari
 
-Сборка из Xcode для Safari считается неподписанной для магазина. Без галочек ниже расширения молчат. Это ограничение Safari, не ошибка проекта.
+A build from Xcode is unsigned as far as the App Store is concerned. Without the checkboxes below, the extensions do nothing.
 
-1. Откройте Safari → Настройки (Settings) → вкладка **Дополнительно** (Advanced).
-2. Внизу включите **Показывать функции для веб-разработчиков** (Show features for web developers).
-3. В строке меню появится пункт **Разработка** (Develop). Откройте его и включите **Разрешить неподписанные расширения** (Allow Unsigned Extensions). macOS спросит пароль.
-4. Safari → Настройки → **Дополнения** (Extensions).
-5. Включите четыре пункта:
-   - **QuietSafari** — YouTube, скриптлеты списков и счётчик
-   - **QuietSafari Content Blocker** — реклама EasyList
-   - **QuietSafari Privacy** — трекеры EasyPrivacy, включая Метрику
-   - **QuietSafari Russian** — RU AdList и реклама Яндекса (РСЯ, Adfox)
-6. Выберите QuietSafari и разрешите ему все сайты: **Всегда разрешать на всех веб-сайтах** (Always Allow on Every Website).
+1. Safari → Settings → Advanced.
+2. Turn on **Show features for web developers**.
+3. Develop → **Allow Unsigned Extensions**. macOS asks for your password.
+4. Safari → Settings → Extensions.
+5. Turn on:
+   - **QuietSafari** — YouTube, list scriptlets, and the counter
+   - **QuietSafari Content Blocker** — EasyList
+   - **QuietSafari Privacy** — EasyPrivacy, including Metrica
+   - **QuietSafari Russian** — RU AdList and Yandex ads (RSYA, Adfox)
+6. Select QuietSafari and choose **Always Allow on Every Website**.
 
-Когда вы полностью закрываете Safari, пункт «Разрешить неподписанные расширения» выключается сам. Перед следующей проверкой включите его снова. Бесплатная подпись также протухает примерно через семь дней: приложение перестанет открываться, просто снова нажмите Run.
+Quitting Safari turns Allow Unsigned Extensions off. Turn it on again before the next check. A free signing profile also expires after about seven days: press Run again.
 
-После каждого нового Run Safari иногда сам снимает галочки расширений, потому что подпись сборки изменилась. Если блокировка пропала после пересборки — загляните в Дополнения и включите все четыре пункта ещё раз.
+After each new Run, Safari may untick the extensions because the signature changed. Open Extensions and turn all four on again.
 
-## Проверить
+## Check
 
-Окно QuietSafari должно быть открыто. В Safari включены все четыре пункта, у QuietSafari разрешены все сайты.
+The QuietSafari window should be open. All four Safari items are on, and QuietSafari is allowed on every site.
 
-**Состояние в окне.** Строки QuietSafari Content Blocker, QuietSafari Privacy и QuietSafari Russian должны стать «включено» вскоре после того, как вы включили их в Safari. Если через четверть минуты строка всё ещё «ещё не проверено», она сменится на «выключено» и окно подскажет удалить старую копию (раздел ниже). Если там «выключено», а галочка в Safari стоит, выключите и снова включите эту галочку, затем переключитесь на окно приложения. «Включено» ставится и тогда, когда Safari реально запросил правила.
+**Status.** Content Blocker, Privacy, and Russian should say “on” soon after you enable them. “updating…” means Safari is still compiling a list. If a row stays on “not checked yet”, it becomes “off” and the window points at the duplicate-extension section below. “on” is also set when Safari has actually asked for the rules.
 
-**Проверочная страница.**
+**Test page.**
 
-1. Нажмите **Открыть проверочную страницу**.
-2. Если macOS спросит про входящие соединения — нажмите **Разрешить**. Страница слушает только этот компьютер.
-3. Красных прямоугольников «РЕКЛАМА» быть не должно. Зелёный абзац должен остаться.
-4. Под каждым блоком страница пишет, кто его скрыл: веб-расширение или блокировщик контента. Строка про сеть должна сказать, что рекламный адрес не загрузился. Если там написано, что скрипт расширения не запустился, включите QuietSafari и доступ ко всем сайтам.
-5. Если 127.0.0.1 остался в белом списке с прошлой проверки, страница прямо так и напишет, а блоки останутся красными. Удалите адрес и обновите страницу.
+1. Click **Open test page**.
+2. If macOS asks about incoming connections, click **Allow**. The page only listens on this Mac.
+3. The red AD blocks should be gone. The green paragraph should stay.
+4. Under each block the page says what hid it. The network line should say the ad address did not load. If the extension script did not run, turn on QuietSafari and allow every website.
+5. If 127.0.0.1 is still in the allowlist, the page says so and the red blocks stay. Remove that address and reload.
 
-**Обычный сайт.** Откройте новостную страницу, где раньше были баннеры сбоку. Баннеров быть не должно, текст статьи остаётся.
+**A normal site.** Open a news page that used to have side banners. The banners should be gone. The article should stay.
 
-**Русская реклама Яндекса.** Откройте https://rifme.net/ и обновите страницу уже после галочки QuietSafari Russian.
+**Yandex ads.** Open https://rifme.net/ after QuietSafari Russian is on.
 
-- Карточек со словом «РЕКЛАМА» (знакомства, облако и похожие блоки в `yandex_rtb`) быть не должно.
-- Текст самой страницы и виджет комментариев VK должны остаться.
-- Откройте https://yandex.ru/maps и https://ya.ru — поиск и карты должны открываться, как без блокировщика.
+- The ad cards (dating, cloud, and similar blocks inside `yandex_rtb`) should be gone.
+- The page text and the VK comments widget should stay.
+- https://yandex.ru/maps and https://ya.ru should still open.
 
-**Окна про cookie.** Переключатель в окне выключен. Баннер «мы используем cookie» на обычном сайте при этом остаётся. Включите «Скрывать окна про cookie», обновите страницу — известные баннеры (OneTrust, Cookiebot и несколько таких же) прячутся. Выключите обратно, если сайт без этого окна не пускает дальше.
+**Cookie notices.** The switch is off, so a cookie banner on a normal site stays. Turn on “Hide cookie notices” and reload to hide known banners (OneTrust, Cookiebot, and a few others). Turn it off again if a site will not continue without that banner.
 
-**YouTube.** Откройте youtube.com и включите ролик, у которого бывает реклама перед видео (как ролик Notino со словом Sponsored и кнопкой Skip).
+**YouTube.** Open a video that used to show a Sponsored pre-roll.
 
-- Рекламный ролик перед видео и в середине не должен начинаться. Сразу играет выбранное видео, со звуком и перемоткой.
-- На главной и справа от ролика не должно быть блоков Sponsored, баннеров и сопутствующей рекламы.
-- Если реклама всё же мелькнула, она должна исчезнуть сама, без вашего нажатия на Skip.
-- Обычный ролик короче трёх минут тоже должен доигрывать до конца, а не перескакивать.
+- The ad before the video, and in the middle, should not start. The chosen video plays, with sound and seeking.
+- Sponsored slots on the home page and beside the video should be hidden.
+- If an ad still flashes, it should disappear on its own.
+- A normal video shorter than three minutes should play through.
 
-**Белый список.** Добавьте `127.0.0.1`, обновите проверочную страницу — красные блоки возвращаются. Удалите адрес и обновите страницу ещё раз.
+**Allowlist.** Add `127.0.0.1`, reload the test page, and the red blocks come back. Remove it and reload again.
 
-**Свежие списки.** «Обновить фильтры» при интернете скачивает EasyList, EasyPrivacy и RU AdList. В окне появятся три числа и дата. Без интернета остаётся встроенный набор, это не ошибка списков.
+**Fresh lists.** With a network, Update filters downloads EasyList, EasyPrivacy, and RU AdList. The window shows three counts and a date. Without a network, the built-in set remains.
 
-## Значок в строке меню
+## Menu bar
 
-После Run в строке меню сверху появляется лист QuietSafari. Щелчок открывает короткую панель: общий выключатель, выключатель для текущего сайта Safari (если сайт ещё не определился, можно вписать адрес), счётчик, состояние трёх блокировщиков, «Обновить фильтры», «Открыть настройки», запуск при входе и скрытие значка в Dock. «Завершить QuietSafari» закрывает и окно, и значок.
+After Run, a leaf appears in the menu bar. Click it for the blocking switch, the current Safari site (or a typed domain), the counter, the three blockers, Update filters, Open settings, launch at login, and Hide Dock icon. Quit QuietSafari closes the window and the icon.
 
-Значок приложения — белый лист на приглушённо-зелёном скруглении. Исходник: `App/AppIcon.svg`.
+The app icon is a white leaf on a muted sage rounded square. Source: `App/AppIcon.svg`.
 
-## Две копии одного расширения
+## Two copies of one extension
 
-Так бывает после нового Run, если старая сборка QuietSafari ещё лежит на диске. В Safari → Настройки → Дополнения тогда два пункта с одним именем, например два «QuietSafari Content Blocker». Галочка стоит на старом, а окно новой программы смотрит на новый и пишет «ещё не проверено» или «выключено».
+This happens after a new Run if an old QuietSafari build is still on disk. Safari → Settings → Extensions then shows two rows with the same name. The checkbox is on the old one, and the new app says “not checked yet” or “off”.
 
-1. Полностью закройте Safari (Safari → Завершить Safari, не только окно).
-2. В Finder откройте меню «Переход» → «Переход к папке…» и вставьте:
+1. Quit Safari completely.
+2. In Finder, Go → Go to Folder, and paste:
 
    `~/Library/Developer/Xcode/DerivedData`
 
-3. Удалите все папки, имя которых начинается с `QuietSafari-`. Это старые сборки Xcode, не ваш проект с исходниками.
-4. Если когда-то копировали `QuietSafari.app` в «Программы» или на рабочий стол — удалите и эту копию. Оставлять нужно только то, что снова создаст кнопка Run.
-5. В Xcode нажмите Run. Откройте Safari и Настройки → Дополнения. Каждое имя (QuietSafari, QuietSafari Content Blocker, QuietSafari Privacy, QuietSafari Russian) должно встретиться один раз. Включите эти единственные пункты и снова разрешите QuietSafari все сайты.
+3. Delete every folder whose name starts with `QuietSafari-`. Those are old Xcode builds, not this project.
+4. If you copied `QuietSafari.app` to Applications or the desktop, delete that copy too.
+5. Press Run. In Safari → Settings → Extensions, each name should appear once. Turn those on and allow QuietSafari on every website again.
 
-## Если что-то пошло не так
+## If something goes wrong
 
-**Окно не открылось, Xcode красным пишет про App Groups или capability.**  
-Бесплатная команда иногда спотыкается именно на общей папке. Блокировка по встроенному списку может работать и без неё. Откройте три файла и в каждом удалите блок из четырёх строк `com.apple.security.application-groups` (ключ и весь `array` под ним):
+**The window did not open, and Xcode is red about App Groups.**  
+A free team sometimes fails on the shared folder. Blocking from the built-in list can still work. In each of these files, delete the `com.apple.security.application-groups` key and the array under it:
 
 - `App/QuietSafari.entitlements`
 - `Extension/QuietSafariExtension.entitlements`
 - `ContentBlocker/QuietSafariContentBlocker.entitlements`
 
-Нажмите Run снова. Выключатель и белый список заработают только когда общая папка подпишется; проверочная страница и встроенные правила — уже без неё.
+Press Run again. The switch and allowlist work only after the shared folder signs. The test page and built-in rules work without it.
 
-**В окне написано, что общая папка недоступна.**  
-У всех пяти целей должна быть выбрана Team, не пункт None и не пустая подпись «Sign to Run Locally» без команды. Команда одна и та же. После смены команды нажмите Run ещё раз.
+**The window says the shared folder is unavailable.**  
+All five targets need a Team, not None and not Sign to Run Locally without a team. Use the same team, then Run again.
 
-**В Safari нет дополнений.**  
-Сначала хотя бы раз откройте приложение кнопкой Run. Потом полностью закройте Safari и откройте снова. Проверьте меню Разработка → Разрешить неподписанные расширения.
+**Safari shows no extensions.**  
+Open the app with Run at least once. Quit Safari and open it again. Check Develop → Allow Unsigned Extensions.
 
-**Дополнения есть, но красные блоки на месте.**  
-Включены ли все четыре, включая QuietSafari Russian. У QuietSafari выбран доступ ко всем сайтам. Страница обновлена после включения. Пункт про неподписанные расширения включён в этом запуске Safari.
+**Extensions are there, but the red blocks remain.**  
+All four are on, including QuietSafari Russian. QuietSafari is allowed on every website. The page was reloaded after that. Allow Unsigned Extensions is on for this Safari launch.
 
-**Content Blocker в окне «ошибка», а в Safari галочка стоит.**  
-Под строкой будет текст ошибки Safari, только если список правил отклонён. Надпись «обновляется…» значит, что Safari ещё принимает списки по очереди. Сообщение SFErrorDomain error 3 (загрузка прервана) больше не показывается как ошибка: старые правила при этом остаются. Галочка в Safari означает, что расширение включено.
+**A content blocker says “error” while its Safari checkbox is on.**  
+The line under the row is Safari’s reason, and only when the rule list was rejected. “updating…” means Safari is still accepting the lists one at a time. SFErrorDomain error 3 (loading interrupted) is not shown as an error: the previous rules stay. A checkbox only means the extension is enabled.
 
-**Красные блоки на проверочной странице, хотя всё «включено».**  
-Прочитайте строки под блоками. «127.0.0.1 в белом списке» значит удалить этот адрес. «Скрипт веб-расширения не запустился» значит нет галочки QuietSafari или доступа ко всем сайтам. «Рекламный скрипт загрузился» значит сетевые правила Content Blocker не применились: смотрите текст ошибки под строкой состояния.
+**Red blocks on the test page while everything says on.**  
+Read the lines under the blocks. “127.0.0.1 is allowed” means remove that address. “script did not run” means QuietSafari is off or not allowed on every website. “The ad script loaded” means the Content Blocker network rules were not applied: read the status error.
 
-**Кнопка «Обновить фильтры» пишет, что расширение не приняло правила.**  
-В Safari не стоит галочка QuietSafari Content Blocker, QuietSafari Privacy или QuietSafari Russian. Включите их и нажмите кнопку ещё раз. Встроенные списки подхватываются и в момент включения расширения, без кнопки.
+**Update filters says an extension did not accept the rules.**  
+Turn on Content Blocker, Privacy, and Russian in Safari, then press the button again. Built-in lists are also picked up when you enable the extension, without the button.
 
-**Xcode просит пароль снова и снова.**  
-В окне пароля нажмите Always Allow, а не Allow один раз.
+**Xcode keeps asking for the password.**  
+Click Always Allow, not Allow once.
 
-Подробности, если захотите их кому-то переслать: откройте приложение «Консоль» (Console), в поиске наберите `QuietSafari` и повторите действие.
+For more detail, open Console, search for `QuietSafari`, and repeat the action.
 
-## Чего в этой версии ещё нет
+## Not in this version
 
-- Реклама, которую YouTube вклеивает внутрь самого видеофайла, может мелькнуть: её нельзя вырезать из адреса, не сломав ролик. Скрипт тогда перематывает её.
-- Строки меню, запуска вместе с Mac и платной подписи для установки без Xcode.
+- An ad YouTube stitches into the video file itself can flash. It cannot be removed from the URL without breaking the video. The script seeks past it.
+- A paid signature for install without the unsigned-extension step.
 
-Порядок работ — в [docs/ROADMAP.md](docs/ROADMAP.md).
+The order of work is in [docs/ROADMAP.md](docs/ROADMAP.md).

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// First-launch steps for an ad-hoc build. Safari forgets "Allow Unsigned Extensions" when it quits.
+/// First-launch steps for an ad-hoc build. Safari forgets Allow Unsigned Extensions when it quits.
 struct OnboardingView: View {
     var onOpenSafari: () -> Void
     var onDone: () -> Void
@@ -14,28 +14,28 @@ struct OnboardingView: View {
                     .frame(width: 44, height: 44)
                     .accessibilityLabel("QuietSafari")
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Включить QuietSafari")
+                    Text("Turn on QuietSafari")
                         .font(.title2.weight(.semibold))
-                    Text("Четыре галочки в Safari. Без них списки молчат.")
+                    Text("Four checkboxes in Safari. Without them the lists do nothing.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                step("1", "Safari → Настройки → Дополнительно. Внизу включите «Показывать функции для веб-разработчиков».")
-                step("2", "В меню «Разработка» включите «Разрешить неподписанные расширения». macOS спросит пароль. Safari забывает этот пункт, когда его полностью закрывают.")
-                step("3", "Safari → Настройки → Дополнения. Включите QuietSafari, Content Blocker, Privacy и Russian. У QuietSafari разрешите все сайты.")
-                step("4", "Если macOS пишет, что приложение повреждено: Системные настройки → Конфиденциальность и безопасность → «Всё равно открыть». Либо в Терминале: xattr -dr com.apple.quarantine и путь к QuietSafari.app.")
+                step("1", "Safari → Settings → Advanced. At the bottom, turn on Show features for web developers.")
+                step("2", "In the Develop menu, turn on Allow Unsigned Extensions. macOS will ask for your password. Safari forgets this when you quit it.")
+                step("3", "Safari → Settings → Extensions. Turn on QuietSafari, Content Blocker, Privacy, and Russian. Allow QuietSafari on every website.")
+                step("4", "If macOS says the app is damaged: System Settings → Privacy & Security → Open Anyway. Or in Terminal: xattr -dr com.apple.quarantine and the path to QuietSafari.app.")
             }
 
             HStack {
-                Button("Открыть настройки дополнений Safari") {
+                Button("Open Safari extension settings") {
                     onOpenSafari()
                 }
                 .keyboardShortcut(.defaultAction)
                 Spacer()
-                Button("Готово") {
+                Button("Done") {
                     onDone()
                 }
             }
@@ -49,9 +49,9 @@ struct OnboardingView: View {
         HStack(alignment: .top, spacing: 10) {
             Text(number)
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(red: 0.16, green: 0.18, blue: 0.14))
                 .frame(width: 22, height: 22)
-                .background(QuietSafariPalette.sage, in: Circle())
+                .background(QuietSafariPalette.logo, in: Circle())
             Text(text)
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)

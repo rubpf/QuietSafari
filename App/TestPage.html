@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Проверка QuietSafari</title>
+  <title>QuietSafari check</title>
   <style>
     body {
       margin: 0;
@@ -44,20 +44,20 @@
 </head>
 <body>
   <main>
-    <h1>Проверка QuietSafari</h1>
-    <p class="note">Если ниже виден красный прямоугольник со словом «РЕКЛАМА», блокировка ещё не работает. Зелёный блок с обычным текстом должен остаться.</p>
+    <h1>QuietSafari check</h1>
+    <p class="note">If a red AD block is still visible, blocking is not working yet. The green paragraph should stay.</p>
 
-    <ins class="adsbygoogle ad" id="slot-adsense">РЕКЛАМА</ins>
-    <p class="how" id="how-adsense">Проверяем, кто скрыл первый блок…</p>
-    <div id="google_ads_iframe_1" class="ad">РЕКЛАМА</div>
-    <p class="how" id="how-iframe">Проверяем, кто скрыл второй блок…</p>
-    <div id="div-gpt-ad-banner" class="ad">РЕКЛАМА</div>
-    <p class="how" id="how-gpt">Проверяем, кто скрыл третий блок…</p>
+    <ins class="adsbygoogle ad" id="slot-adsense">AD</ins>
+    <p class="how" id="how-adsense">Checking what hid the first block…</p>
+    <div id="google_ads_iframe_1" class="ad">AD</div>
+    <p class="how" id="how-iframe">Checking what hid the second block…</p>
+    <div id="div-gpt-ad-banner" class="ad">AD</div>
+    <p class="how" id="how-gpt">Checking what hid the third block…</p>
 
-    <p class="keep" id="keep">Этот блок должен быть виден. Если его нет, правила слишком широкие — так быть не должно.</p>
-    <p id="qs-net">Проверяем, обрывается ли запрос к рекламной сети…</p>
-    <p id="qs-ext">Проверяем, запустился ли скрипт веб-расширения…</p>
-    <p class="note">Ролики YouTube этой страницей не проверяются. Откройте youtube.com и включите ролик.</p>
+    <p class="keep" id="keep">This paragraph should stay visible. If it is gone, a rule is too broad.</p>
+    <p id="qs-net">Checking whether the ad-network request is blocked…</p>
+    <p id="qs-ext">Checking whether the web extension script ran…</p>
+    <p class="note">This page does not test YouTube. Open youtube.com and play a video.</p>
   </main>
   <script>
     var settled = false;
@@ -68,26 +68,26 @@
       settled = true;
       var line = document.getElementById("qs-net");
       if (blocked) {
-        line.textContent = "Рекламный адрес не загрузился. Это сделал блокировщик контента (сетевое правило), если интернет есть.";
+        line.textContent = "The ad address did not load. That is the content blocker, if you are online.";
       } else {
-        line.textContent = "Рекламный скрипт загрузился. Сетевое правило Content Blocker на этот адрес не сработало.";
+        line.textContent = "The ad script loaded. The Content Blocker network rule did not catch this address.";
       }
     }
     function mechanism(node) {
       if (!node) {
-        return "блок не найден";
+        return "block not found";
       }
       if (document.documentElement.dataset.qsAllowlisted === "1") {
-        return "не скрыт: 127.0.0.1 в белом списке";
+        return "still visible: 127.0.0.1 is allowed";
       }
       var hidden = getComputedStyle(node).display === "none";
       if (node.dataset.qsBy === "extension") {
-        return hidden ? "скрыто веб-расширением" : "веб-расширение отметило блок, но он виден";
+        return hidden ? "hidden by the web extension" : "marked by the web extension, but still visible";
       }
       if (hidden) {
-        return "скрыто блокировщиком контента";
+        return "hidden by the content blocker";
       }
-      return "не скрыт";
+      return "still visible";
     }
     function reportSlots() {
       var pairs = [
@@ -107,11 +107,11 @@
         return;
       }
       if (document.documentElement.dataset.qsAllowlisted === "1") {
-        ext.textContent = "Веб-расширение запустилось и не прячет блоки: 127.0.0.1 есть в белом списке. Удалите его в окне QuietSafari.";
+        ext.textContent = "The web extension ran and is not hiding blocks: 127.0.0.1 is in the allowlist. Remove it in QuietSafari.";
       } else if (document.documentElement.dataset.qsCosmeticSeen === "1") {
-        ext.textContent = "Скрипт веб-расширения на этой странице запустился.";
+        ext.textContent = "The web extension script ran on this page.";
       } else {
-        ext.textContent = "Скрипт веб-расширения на этой странице не запустился. Проверьте галочку QuietSafari и доступ ко всем сайтам.";
+        ext.textContent = "The web extension script did not run. Check the QuietSafari checkbox and allow it on every website.";
       }
     }
     setTimeout(reportSlots, 400);

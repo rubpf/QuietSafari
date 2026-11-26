@@ -54,7 +54,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("QuietSafari")
                     .font(.title2.weight(.semibold))
-                Text("Блокировка рекламы в Safari")
+                Text("Ad blocking for Safari")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -67,15 +67,15 @@ struct ContentView: View {
 
     private var blockingSection: some View {
         Section {
-            Toggle("Блокировка включена", isOn: Binding(
+            Toggle("Blocking on", isOn: Binding(
                 get: { store.blockingEnabled },
                 set: { store.setBlockingEnabled($0) }
             ))
             .disabled(store.isBusy)
         } header: {
-            Text("Блокировка")
+            Text("Blocking")
         } footer: {
-            Text("Выключение очищает правила Safari. Уже открытую страницу нужно обновить.")
+            Text("Turning this off clears Safari’s rules. Reload pages that are already open.")
         }
     }
 
@@ -89,9 +89,9 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
         } header: {
-            Text("Отмечено на страницах")
+            Text("Seen on pages")
         } footer: {
-            Text("Считает то, что увидела программа на странице: рекламные блоки и пропущенную рекламу YouTube. Сколько адресов Safari оборвал сам, он не сообщает — так устроен блокировщик контента.")
+            Text("Counts ad slots and skipped YouTube ads the extension can see. Safari does not report how many network requests it blocked.")
         }
     }
 
@@ -100,18 +100,18 @@ struct ContentView: View {
             HStack {
                 TextField("example.com", text: $draft)
                     .onSubmit(addDraft)
-                Button("Добавить", action: addDraft)
+                Button("Add", action: addDraft)
                     .disabled(store.isBusy || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             if store.allowlist.isEmpty {
-                Text("Пока пусто — реклама блокируется на всех сайтах.")
+                Text("Empty, so ads are blocked on every site.")
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(store.allowlist, id: \.self) { site in
                     HStack {
                         Text(site)
                         Spacer()
-                        Button("Удалить") {
+                        Button("Remove") {
                             store.removeSite(site)
                         }
                         .disabled(store.isBusy)
@@ -123,19 +123,19 @@ struct ContentView: View {
                     .foregroundStyle(.orange)
             }
         } header: {
-            Text("Не блокировать на этих сайтах")
+            Text("Don’t block these sites")
         } footer: {
-            Text("Пишите адрес как example.com. www в начале можно не указывать: исключение покроет и сайт, и его поддомены.")
+            Text("Use example.com. A leading www is optional: the exception covers the site and its subdomains.")
         }
     }
 
     private var filtersSection: some View {
         Section {
-            Button("Обновить фильтры") {
+            Button("Update filters") {
                 store.reapplyRules()
             }
             .disabled(store.isBusy)
-            Toggle("Скрывать окна про cookie", isOn: Binding(
+            Toggle("Hide cookie notices", isOn: Binding(
                 get: { store.blockCookieNotices },
                 set: { store.setBlockCookieNotices($0) }
             ))
@@ -144,15 +144,15 @@ struct ContentView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         } header: {
-            Text("Фильтры")
+            Text("Filters")
         } footer: {
-            Text("Кнопка скачивает EasyList, EasyPrivacy и RU AdList и переводит их в правила Safari. Окна про cookie выключены, пока вы сами не включите переключатель.")
+            Text("Downloads EasyList, EasyPrivacy, and RU AdList and converts them into Safari rules. Cookie notices stay visible until you turn the switch on.")
         }
     }
 
     private var testSection: some View {
         Section {
-            Button("Открыть проверочную страницу") {
+            Button("Open test page") {
                 store.openTestPage()
             }
             .disabled(store.isBusy)
@@ -165,9 +165,9 @@ struct ContentView: View {
                     .foregroundStyle(store.statusIsError ? Color.orange : Color.secondary)
             }
         } header: {
-            Text("Проверка")
+            Text("Check")
         } footer: {
-            Text("Страница открывается в Safari на этом компьютере. Красного блока «РЕКЛАМА» быть не должно. Обычный текст под ним должен остаться.")
+            Text("Opens a page in Safari on this Mac. The red AD blocks should be gone. The green paragraph under them should stay.")
         }
     }
 
@@ -177,8 +177,8 @@ struct ContentView: View {
             labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled, problem: store.privacyProblem, updating: store.privacyUpdating)
             labeledState("QuietSafari Russian", enabled: store.russianBlockerEnabled, problem: store.russianProblem, updating: store.russianUpdating)
             labeledState("QuietSafari", enabled: store.webExtensionEnabled, problem: "", updating: false)
-            LabeledContent("Общая папка") {
-                Text(store.appGroupAvailable ? "доступна" : "недоступна")
+            LabeledContent("Shared folder") {
+                Text(store.appGroupAvailable ? "available" : "unavailable")
                     .foregroundStyle(store.appGroupAvailable ? Color.secondary : Color.orange)
             }
             Text(store.appGroupID)
@@ -186,20 +186,20 @@ struct ContentView: View {
                 .foregroundStyle(.tertiary)
                 .textSelection(.enabled)
         } header: {
-            Text("Состояние")
+            Text("Status")
         }
     }
 
     private var helpSection: some View {
         Section {
             if store.safariResetNotice {
-                Text("Safari сбросил разрешение — включить снова")
+                Text("Safari reset the permission. Turn it on again.")
                     .foregroundStyle(.secondary)
-                Button("Открыть настройки Safari") {
+                Button("Open Safari settings") {
                     store.openSafariExtensionSettings()
                 }
             }
-            Button("Показать шаги включения") {
+            Button("Show setup steps") {
                 showOnboarding = true
             }
             Text(helpText)
@@ -207,7 +207,7 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
-            Text("Как включить в Safari")
+            Text("Turn on in Safari")
         }
     }
 
@@ -247,31 +247,20 @@ struct ContentView: View {
 
     private func statusWord(_ enabled: Bool?, problem: String, updating: Bool) -> String {
         if updating {
-            return "обновляется…"
+            return "updating…"
         }
         if !problem.isEmpty {
-            return "ошибка"
+            return "error"
         }
         switch enabled {
-        case true: return "включено"
-        case false: return "выключено"
-        case nil: return "ещё не проверено"
+        case true: return "on"
+        case false: return "off"
+        case nil: return "not checked yet"
         }
     }
 
     private func elementWord(_ count: Int) -> String {
-        let value = abs(count) % 100
-        let last = value % 10
-        if value > 10 && value < 20 {
-            return "элементов"
-        }
-        if last == 1 {
-            return "элемент"
-        }
-        if last >= 2 && last <= 4 {
-            return "элемента"
-        }
-        return "элементов"
+        count == 1 ? "item" : "items"
     }
 
     private func addDraft() {
@@ -285,10 +274,10 @@ struct ContentView: View {
 
     private var helpText: String {
         """
-        1. Safari → Настройки → Дополнительно → включите «Показывать функции для веб-разработчиков».
-        2. Меню «Разработка» → «Разрешить неподписанные расширения». Safari забывает этот пункт, когда его полностью закрывают.
-        3. Safari → Настройки → Дополнения. Включите четыре пункта: QuietSafari, QuietSafari Content Blocker, QuietSafari Privacy и QuietSafari Russian.
-        4. У QuietSafari разрешите доступ ко всем сайтам. Content Blocker — EasyList, Privacy — EasyPrivacy, Russian — RU AdList и реклама Яндекса, QuietSafari — YouTube, скрипты списков и счётчик.
+        1. Safari → Settings → Advanced → turn on Show features for web developers.
+        2. Develop menu → Allow Unsigned Extensions. Safari forgets this when you quit it.
+        3. Safari → Settings → Extensions. Turn on QuietSafari, QuietSafari Content Blocker, QuietSafari Privacy, and QuietSafari Russian.
+        4. Allow QuietSafari on every website. Content Blocker is EasyList, Privacy is EasyPrivacy, Russian is RU AdList and Yandex ads, QuietSafari is YouTube, list scripts, and the counter.
         """
     }
 }

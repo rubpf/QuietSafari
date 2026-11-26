@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "QuietSafari",
-  "description": "Прячет рекламу на страницах и помогает пропускать ролики на YouTube. Сетевые правила живут в QuietSafari Content Blocker.",
+  "description": "Hides ads on the page and skips YouTube ads. Network rules live in QuietSafari Content Blocker.",
   "version": "0.3.0",
   "icons": {
     "16": "images/icon-16.png",

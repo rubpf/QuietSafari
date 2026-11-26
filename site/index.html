@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QuietSafari — тише в Safari</title>
-  <meta name="description" content="Блокировщик рекламы для Safari на Mac. YouTube, баннеры, трекеры и реклама Яндекса. Ничего не уходит с компьютера.">
+  <title>QuietSafari — a quieter Safari</title>
+  <meta name="description" content="An ad blocker for Safari on Mac. YouTube, banners, trackers, and Yandex ads. Nothing leaves this computer.">
   <link rel="icon" href="icon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,108 +12,86 @@
   <div class="wrap">
     <header class="top">
       <a class="brand" href="#top"><img src="icon.svg" alt=""> QuietSafari</a>
-      <button class="lang" id="lang" type="button">EN</button>
     </header>
 
     <main id="top" class="hero">
       <div>
-        <p class="lede ru">Для Safari на Mac. Без подписки и без платного аккаунта разработчика.</p>
-        <p class="lede en">For Safari on Mac. No subscription and no paid developer account.</p>
-        <h1 class="ru">Тише<br>в Safari.</h1>
-        <h1 class="en">A quieter<br>Safari.</h1>
-        <p class="lede ru">Прячет баннеры, трекеры, ролики YouTube и рекламу Яндекса на чужих сайтах. Поиск и карты Яндекса остаются.</p>
-        <p class="lede en">Hides banners, trackers, YouTube ads, and Yandex ads on other sites. Yandex search and maps stay.</p>
+        <p class="lede">For Safari on Mac. No subscription, and no paid Apple developer account.</p>
+        <h1>A quieter<br>Safari.</h1>
+        <p class="lede">Hides banners, trackers, YouTube ads, and Yandex ads on other sites. Yandex search and maps stay put.</p>
         <div class="actions">
-          <a class="button" href="https://github.com/rubpf/QuietSafari/releases/latest/download/QuietSafari.zip">
-            <span class="ru">Скачать для Mac</span>
-            <span class="en">Download for Mac</span>
-          </a>
+          <a class="button" href="https://github.com/rubpf/QuietSafari/releases/latest/download/QuietSafari.zip">Download for Mac</a>
           <a class="button quiet" href="https://github.com/rubpf/QuietSafari">GitHub</a>
         </div>
         <div class="brew">
           <code id="brew">brew install --cask --no-quarantine rubpf/tap/quietsafari</code>
-          <button class="button quiet" id="copy" type="button"><span class="ru">Копировать</span><span class="en">Copy</span></button>
+          <button class="button quiet" id="copy" type="button">Copy</button>
         </div>
-        <p class="lede ru">Нужен macOS 14 или новее.</p>
-        <p class="lede en">Requires macOS 14 or later.</p>
+        <p class="lede">macOS 14 or later.</p>
       </div>
-      <img class="hero-icon" src="icon.svg" alt="">
+      <img class="hero-icon" src="icon.svg" alt="QuietSafari icon">
     </main>
 
     <section>
-      <h2 class="ru">Что замолкает</h2>
-      <h2 class="en">What goes quiet</h2>
+      <h2>What goes quiet</h2>
       <div class="grid">
-        <article class="card"><strong class="ru">YouTube</strong><strong class="en">YouTube</strong><span class="ru">Ролик до видео вырезается из ответа плеера.</span><span class="en">The pre-roll is removed from the player response.</span></article>
-        <article class="card"><strong class="ru">Баннеры</strong><strong class="en">Banners</strong><span class="ru">EasyList прячет обычную медийную рекламу.</span><span class="en">EasyList hides ordinary display ads.</span></article>
-        <article class="card"><strong class="ru">Трекеры</strong><strong class="en">Trackers</strong><span class="ru">EasyPrivacy, включая Метрику.</span><span class="en">EasyPrivacy, including Yandex Metrica.</span></article>
-        <article class="card"><strong class="ru">Яндекс и RU</strong><strong class="en">Yandex and RU</strong><span class="ru">РСЯ и Adfox на чужих сайтах. Не поиск и не карты.</span><span class="en">Yandex ads on other sites. Not search or maps.</span></article>
+        <article class="card"><strong>YouTube</strong><span>Pre-rolls are stripped from the player response before they start.</span></article>
+        <article class="card"><strong>Banners</strong><span>EasyList hides ordinary display ads and the empty slots they leave.</span></article>
+        <article class="card"><strong>Trackers</strong><span>EasyPrivacy, including Yandex Metrica.</span></article>
+        <article class="card"><strong>Yandex</strong><span>Yandex and Adfox ads on other sites. Not search, and not maps.</span></article>
       </div>
     </section>
 
     <section class="layout">
       <div>
-        <h2 class="ru">Три шага</h2>
-        <h2 class="en">Three steps</h2>
+        <h2>Three steps</h2>
         <div class="steps">
           <article class="step">
             <div class="num">1</div>
             <div>
-              <strong class="ru">Скачать и открыть</strong>
-              <strong class="en">Download and open</strong>
-              <p class="ru">Распакуйте QuietSafari.zip. Если macOS говорит «повреждено», откройте Системные настройки → Конфиденциальность и безопасность → «Всё равно открыть». Либо: <code>xattr -dr com.apple.quarantine</code> и путь к приложению.</p>
-              <p class="en">Unzip QuietSafari.zip. If macOS says the app is damaged, open System Settings → Privacy &amp; Security → Open Anyway. Or run <code>xattr -dr com.apple.quarantine</code> on the app.</p>
+              <strong>Download and open</strong>
+              <p>Unzip QuietSafari.zip. If macOS says the app is damaged, open System Settings → Privacy &amp; Security → Open Anyway. Or run <code>xattr -dr com.apple.quarantine</code> on the app.</p>
             </div>
           </article>
           <article class="step">
             <div class="num">2</div>
             <div>
-              <strong class="ru">Разрешить неподписанные расширения</strong>
-              <strong class="en">Allow unsigned extensions</strong>
-              <p class="ru">Safari → Настройки → Дополнительно → «Показывать функции для веб-разработчиков». Затем меню «Разработка» → «Разрешить неподписанные расширения». Safari забывает этот пункт, когда его закрывают.</p>
-              <p class="en">Safari → Settings → Advanced → Show features for web developers. Then Develop → Allow Unsigned Extensions. Safari forgets this when it quits.</p>
+              <strong>Allow unsigned extensions</strong>
+              <p>Safari → Settings → Advanced → Show features for web developers. Then Develop → Allow Unsigned Extensions. Safari turns this off every time you quit it.</p>
             </div>
           </article>
           <article class="step">
             <div class="num">3</div>
             <div>
-              <strong class="ru">Четыре галочки</strong>
-              <strong class="en">Four checkboxes</strong>
-              <p class="ru">Дополнения: QuietSafari, Content Blocker, Privacy, Russian. У QuietSafari разрешите все сайты. При первом запуске приложение само покажет эти шаги.</p>
-              <p class="en">Extensions: QuietSafari, Content Blocker, Privacy, Russian. Allow QuietSafari on every website. The app shows these steps on first launch.</p>
+              <strong>Four checkboxes</strong>
+              <p>Extensions: QuietSafari, Content Blocker, Privacy, and Russian. Allow QuietSafari on every website. The app shows these steps the first time it opens.</p>
             </div>
           </article>
         </div>
       </div>
       <aside class="mock" aria-hidden="true">
         <header><img src="icon.svg" alt=""> QuietSafari</header>
-        <div class="row"><span class="ru">Блокировка</span><span class="en">Blocking</span><span class="switch"><i></i></span></div>
-        <div class="row"><span>grok.com</span><span class="ru">вкл</span><span class="en">on</span></div>
-        <div class="row"><span><i class="dot"></i>Content Blocker</span><span class="ru">вкл</span><span class="en">on</span></div>
-        <div class="row"><span><i class="dot"></i>Privacy</span><span class="ru">вкл</span><span class="en">on</span></div>
-        <div class="row"><span><i class="dot"></i>Russian</span><span class="ru">вкл</span><span class="en">on</span></div>
+        <div class="row"><span>Blocking</span><span class="switch"><i></i></span></div>
+        <div class="row"><span>example.com</span><span>on</span></div>
+        <div class="row"><span><i class="dot"></i>Content Blocker</span><span>on</span></div>
+        <div class="row"><span><i class="dot"></i>Privacy</span><span>on</span></div>
+        <div class="row"><span><i class="dot"></i>Russian</span><span>on</span></div>
       </aside>
     </section>
 
     <section class="faq">
       <h2>FAQ</h2>
       <article>
-        <h3 class="ru">Почему галочки сбрасываются?</h3>
-        <h3 class="en">Why do the checkboxes reset?</h3>
-        <p class="ru">Сборка без платной подписи Apple. Safari выключает «Разрешить неподписанные расширения», когда его полностью закрывают. QuietSafari тогда пишет: «Safari сбросил разрешение — включить снова».</p>
-        <p class="en">The build has no paid Apple signature. Safari turns off Allow Unsigned Extensions when it quits. QuietSafari then says the permission was reset.</p>
+        <h3>Why do the checkboxes reset?</h3>
+        <p>This build has no paid Apple signature. Safari turns off Allow Unsigned Extensions when it quits. QuietSafari then says the permission was reset, with a button back to the settings.</p>
       </article>
       <article>
-        <h3 class="ru">Куда уходят данные?</h3>
-        <h3 class="en">Where does data go?</h3>
-        <p class="ru">Никуда. Правила и настройки остаются на этом Mac. Кнопка «Обновить фильтры» только скачивает публичные списки EasyList, EasyPrivacy и RU AdList.</p>
-        <p class="en">Nowhere. Rules and settings stay on this Mac. Update filters only downloads the public EasyList, EasyPrivacy, and RU AdList files.</p>
+        <h3>Does anything leave this Mac?</h3>
+        <p>No. Rules and settings stay on this computer. Update filters only downloads the public EasyList, EasyPrivacy, and RU AdList files.</p>
       </article>
       <article>
-        <h3 class="ru">Какой macOS нужен?</h3>
-        <h3 class="en">Which macOS?</h3>
-        <p class="ru">macOS 14 или новее. iPhone эта сборка не покрывает.</p>
-        <p class="en">macOS 14 or later. This build does not cover iPhone.</p>
+        <h3>Which macOS?</h3>
+        <p>macOS 14 or later. This build does not cover iPhone.</p>
       </article>
     </section>
 

@@ -121,9 +121,9 @@ enum TestPageError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingPage:
-            return "В приложении нет проверочной страницы."
+            return "The test page is missing from the app."
         case .couldNotBind:
-            return "Не удалось открыть локальный порт для проверочной страницы."
+            return "Could not open a local port for the test page."
         }
     }
 }

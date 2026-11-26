@@ -40,11 +40,11 @@ enum FilterLibrary {
         var errorDescription: String? {
             switch self {
             case .download:
-                return "Не удалось скачать EasyList, EasyPrivacy или RU AdList. Проверьте интернет и нажмите ещё раз."
+                return "Could not download EasyList, EasyPrivacy, or RU AdList. Check the network and try again."
             case .rejected:
-                return "Новые списки не прошли проверку и не применены. Остался предыдущий набор."
+                return "The new lists failed the check and were not applied. The previous set is still in place."
             case .notWritten:
-                return "Списки скачались, но записать их в общую папку не получилось."
+                return "The lists downloaded, but they could not be written to the shared folder."
             }
         }
     }
@@ -150,15 +150,15 @@ enum FilterLibrary {
     static func summary(_ meta: Meta) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = Locale(identifier: "en_US")
         let ads = formatter.string(from: NSNumber(value: meta.adCount)) ?? "\(meta.adCount)"
         let privacy = formatter.string(from: NSNumber(value: meta.privacyCount)) ?? "\(meta.privacyCount)"
         let russian = formatter.string(from: NSNumber(value: meta.russianCount)) ?? "\(meta.russianCount)"
         let counts = "EasyList: \(ads) · EasyPrivacy: \(privacy) · RU AdList: \(russian)"
         if meta.source == "downloaded", !meta.updatedAt.isEmpty {
-            return "\(counts). Обновлено \(meta.updatedAt)."
+            return "\(counts). Updated \(meta.updatedAt)."
         }
-        return "\(counts). Встроенные списки, кнопка выше скачивает свежие."
+        return "\(counts). Built-in lists. The button above downloads fresh copies."
     }
 
     private static func serve(_ base: Data, settings: QuietSafariSettings) -> Data? {
@@ -211,7 +211,7 @@ enum FilterLibrary {
 
     private static func stamp() -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = Locale(identifier: "en_US")
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: Date())

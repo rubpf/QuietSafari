@@ -63,10 +63,10 @@ private struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 12) {
             if store.safariResetNotice {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Safari сбросил разрешение — включить снова")
+                    Text("Safari reset the permission. Turn it on again.")
                         .font(.callout)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Открыть настройки Safari") {
+                    Button("Open Safari settings") {
                         store.openSafariExtensionSettings()
                     }
                 }
@@ -84,13 +84,13 @@ private struct MenuBarView: View {
                     .font(.headline)
                 Spacer()
             }
-            Toggle("Блокировка", isOn: Binding(
+            Toggle("Blocking", isOn: Binding(
                 get: { store.blockingEnabled },
                 set: { store.setBlockingEnabled($0) }
             ))
             .toggleStyle(.switch)
             siteRow
-            LabeledContent("Отмечено") {
+            LabeledContent("Blocked") {
                 Text("\(store.blockedCount)")
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -99,7 +99,7 @@ private struct MenuBarView: View {
                 statusLine("Content Blocker", on: store.contentBlockerEnabled, problem: store.contentBlockerProblem, updating: store.contentBlockerUpdating)
                 statusLine("Privacy", on: store.privacyBlockerEnabled, problem: store.privacyProblem, updating: store.privacyUpdating)
                 statusLine("Russian", on: store.russianBlockerEnabled, problem: store.russianProblem, updating: store.russianUpdating)
-                statusLine("Веб-расширение", on: store.webExtensionEnabled, problem: "", updating: false)
+                statusLine("Web extension", on: store.webExtensionEnabled, problem: "", updating: false)
             }
             if let hint = offHint {
                 Text(hint)
@@ -107,18 +107,18 @@ private struct MenuBarView: View {
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button("Обновить фильтры") { store.reapplyRules() }
+            Button("Update filters") { store.reapplyRules() }
                 .disabled(store.isBusy)
-            Button("Открыть настройки") { store.showMainWindow() }
-            Toggle("Запускать при входе", isOn: Binding(
+            Button("Open settings") { store.showMainWindow() }
+            Toggle("Launch at login", isOn: Binding(
                 get: { store.launchAtLogin },
                 set: { store.setLaunchAtLogin($0) }
             ))
-            Toggle("Скрыть значок в Dock", isOn: Binding(
+            Toggle("Hide Dock icon", isOn: Binding(
                 get: { store.hideDockIcon },
                 set: { store.setHideDockIcon($0) }
             ))
-            Button("Завершить QuietSafari") { store.quit() }
+            Button("Quit QuietSafari") { store.quit() }
                 .keyboardShortcut("q")
         }
         .padding(14)
@@ -130,7 +130,7 @@ private struct MenuBarView: View {
             if store.currentHost.isEmpty {
                 TextField("example.com", text: $draft)
                     .textFieldStyle(.roundedBorder)
-                Button("Не блокировать этот адрес") {
+                Button("Don’t block this site") {
                     _ = store.addSite(draft)
                     draft = ""
                 }
@@ -146,7 +146,7 @@ private struct MenuBarView: View {
                         }
                     }
                 ))
-                Text(store.allowlist.contains(store.currentHost) ? "Сайт в белом списке" : "Блокировка на этом сайте")
+                Text(store.allowlist.contains(store.currentHost) ? "Site is allowed" : "Blocking on this site")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -162,7 +162,7 @@ private struct MenuBarView: View {
             return problems.joined(separator: " ")
         }
         if store.contentBlockerEnabled == false || store.privacyBlockerEnabled == false || store.russianBlockerEnabled == false || store.webExtensionEnabled == false {
-            return "Одно из расширений выключено. Safari → Настройки → Дополнения."
+            return "One extension is off. Safari → Settings → Extensions."
         }
         return nil
     }
@@ -196,14 +196,14 @@ private struct MenuBarView: View {
 
     private func label(on: Bool?, problem: String, updating: Bool) -> String {
         if updating {
-            return "обновляется…"
+            return "updating…"
         }
         if !problem.isEmpty {
-            return "ошибка"
+            return "error"
         }
         switch on {
-        case true: return "вкл"
-        case false: return "выкл"
+        case true: return "on"
+        case false: return "off"
         case nil: return "…"
         }
     }

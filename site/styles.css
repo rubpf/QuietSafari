@@ -3,8 +3,8 @@
   --ink: #1c241c;
   --muted: #5c675c;
   --line: #d5e0d2;
-  --sage: #a8c49a;
-  --sage-deep: #5e7a50;
+  --sage: #c8d0b5;
+  --sage-deep: #5c6848;
   --card: #ffffff;
   --shadow: 0 18px 50px rgba(40, 60, 40, 0.08);
   color-scheme: light;
@@ -16,8 +16,8 @@
     --ink: #e7eee4;
     --muted: #b7c3b4;
     --line: #2c362c;
-    --sage: #a8c49a;
-    --sage-deep: #c5d9ba;
+    --sage: #c8d0b5;
+    --sage-deep: #d5dcc8;
     --card: #212821;
     --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
     color-scheme: dark;
@@ -37,9 +37,6 @@ body {
   color: var(--ink);
   line-height: 1.5;
 }
-
-body.lang-en .ru { display: none; }
-body:not(.lang-en) .en { display: none; }
 
 a { color: var(--sage-deep); }
 
@@ -68,15 +65,6 @@ a { color: var(--sage-deep); }
   width: 36px;
   height: 36px;
   border-radius: 9px;
-}
-
-.lang {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
 }
 
 .hero {

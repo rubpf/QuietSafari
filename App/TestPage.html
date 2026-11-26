@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Проверка QuietSafari</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f5;
+      color: #1c1c1e;
+    }
+    main {
+      max-width: 640px;
+      margin: 48px auto;
+      padding: 0 20px 48px;
+    }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .note { color: #3a3a3c; line-height: 1.45; }
+    .ad {
+      display: block;
+      margin: 16px 0;
+      padding: 24px;
+      background: #d92d20;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .keep {
+      margin: 16px 0;
+      padding: 16px;
+      background: #e5f6ec;
+      border-radius: 12px;
+      line-height: 1.45;
+    }
+    #qs-net { line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Проверка QuietSafari</h1>
+    <p class="note">Если ниже виден красный прямоугольник со словом «РЕКЛАМА», блокировка ещё не работает. Зелёный блок с обычным текстом должен остаться.</p>
+
+    <ins class="adsbygoogle ad">РЕКЛАМА</ins>
+    <div id="google_ads_iframe_1" class="ad">РЕКЛАМА</div>
+    <div id="div-gpt-ad-banner" class="ad">РЕКЛАМА</div>
+
+    <p class="keep" id="keep">Этот блок должен быть виден. Если его нет, правила слишком широкие — так быть не должно.</p>
+    <p id="qs-net">Проверяем, обрывается ли запрос к рекламной сети…</p>
+    <p class="note">Ролики YouTube этой страницей не проверяются. Откройте youtube.com, включите ролик и посмотрите, спрятались ли баннеры и пропала ли видеореклама. Полная поддержка YouTube — следующий крупный этап, сейчас работает только базовая попытка.</p>
+  </main>
+  <script>
+    var settled = false;
+    function markNetwork(blocked) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      var line = document.getElementById("qs-net");
+      if (blocked) {
+        line.textContent = "Рекламный адрес не загрузился. Если интернет есть и включён QuietSafari Content Blocker, сетевая блокировка работает.";
+      } else {
+        line.textContent = "Рекламный скрипт загрузился. Включите «QuietSafari Content Blocker» в Safari и обновите страницу.";
+      }
+    }
+    setTimeout(function () { markNetwork(true); }, 8000);
+  </script>
+  <script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" onload="markNetwork(false)" onerror="markNetwork(true)"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+// QuietSafari shared build settings.
+//
+// If Xcode says a bundle identifier is already in use, change the prefix below
+// and run again. Info.plist files read these settings.
+
+QUIETSAFARI_BUNDLE_PREFIX = com.quietsafari.macos
+QUIETSAFARI_APP_BUNDLE_ID = $(QUIETSAFARI_BUNDLE_PREFIX)
+QUIETSAFARI_EXTENSION_BUNDLE_ID = $(QUIETSAFARI_BUNDLE_PREFIX).extension
+QUIETSAFARI_BLOCKER_BUNDLE_ID = $(QUIETSAFARI_BUNDLE_PREFIX).content-blocker
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+#include? "Local.xcconfig"

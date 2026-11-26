@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+"""Check the scaffold without Xcode: JSON, manifests, plists, and the generated project."""
+
+from __future__ import annotations
+
+import json
+import plistlib
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import build_rules  # noqa: E402
+
+
+def fail(message: str) -> None:
+    raise SystemExit(message)
+
+
+def normalize(raw: str):
+    """Mirror of DomainNormalizer.normalize in App/RuleCompiler.swift."""
+    text = raw.strip().lower()
+    if text.startswith("https://"):
+        text = text[len("https://") :]
+    elif text.startswith("http://"):
+        text = text[len("http://") :]
+    for separator in "/?#":
+        if separator in text:
+            text = text[: text.index(separator)]
+            break
+    if ":" in text:
+        text = text[: text.index(":")]
+    if text.startswith("www."):
+        text = text[4:]
+    if len(text) > 253:
+        return None
+    if text == "localhost":
+        return text
+
+    def host_char(char: str) -> bool:
+        return ("a" <= char <= "z") or ("0" <= char <= "9")
+
+    def valid_label(label: str) -> bool:
+        if not 1 <= len(label) <= 63:
+            return False
+        if not host_char(label[0]) or not host_char(label[-1]):
+            return False
+        return all(host_char(char) or char == "-" for char in label)
+
+    labels = text.split(".")
+    if len(labels) < 2 or not all(valid_label(label) for label in labels):
+        return None
+    return text
+
+
+def check_normalizer() -> None:
+    cases = {
+        "Example.COM": "example.com",
+        "https://www.Example.com/path": "example.com",
+        "http://example.com:8080/a?b=1": "example.com",
+        "www.youtube.com": "youtube.com",
+        "https://www.YouTube.com/watch?v=1": "youtube.com",
+        "localhost": "localhost",
+        "127.0.0.1": "127.0.0.1",
+        "a.b": "a.b",
+        "not a domain": None,
+        "*.example.com": None,
+        "example": None,
+        "example..com": None,
+        "-bad.com": None,
+        "bad-.com": None,
+        "": None,
+        "example.com.": None,
+        "https://example.com.": None,
+    }
+    for raw, expected in cases.items():
+        got = normalize(raw)
+        if got != expected:
+            fail(f"normalize({raw!r}) -> {got!r}, expected {expected!r}")
+
+
+def check_rules() -> None:
+    build_rules.self_test()
+    disk = (ROOT / "Shared" / "blockerList.json").read_text(encoding="utf-8")
+    if disk != build_rules.rules_text():
+        fail("Shared/blockerList.json is stale; run scripts/build_rules.py")
+    compiled = json.loads(disk)
+    if not isinstance(compiled, list) or not compiled:
+        fail("blocker list is empty")
+    allowed_actions = {"block", "block-cookies", "css-display-none", "ignore-previous-rules", "make-https"}
+    for rule in compiled:
+        trigger = rule.get("trigger") or {}
+        action = rule.get("action") or {}
+        if not trigger.get("url-filter"):
+            fail(f"rule missing url-filter: {rule}")
+        if action.get("type") not in allowed_actions:
+            fail(f"bad action: {action}")
+        if action["type"] == "css-display-none" and not action.get("selector"):
+            fail("css rule missing selector")
+        for domain in trigger.get("if-domain") or []:
+            if domain.startswith("*") or "/" in domain:
+                fail(f"bad if-domain {domain}")
+    cosmetic = (ROOT / "Extension" / "Resources" / "cosmetic.js").read_text(encoding="utf-8")
+    youtube = (ROOT / "Extension" / "Resources" / "youtube.js").read_text(encoding="utf-8")
+    for selector in build_rules.COSMETIC_SELECTORS:
+        if selector not in cosmetic:
+            fail(f"cosmetic.js is missing selector {selector}")
+    for selector in build_rules.YOUTUBE_SELECTORS:
+        if selector not in youtube:
+            fail(f"youtube.js is missing selector {selector}")
+    joined = json.dumps(compiled)
+    for rule in compiled:
+        if rule["action"]["type"] != "block":
+            continue
+        pattern = rule["trigger"]["url-filter"]
+        for host in ("youtube.com", "googlevideo.com", "ytimg.com", "google.com"):
+            if host.replace(".", r"\.") in pattern and host != "adservice.google.com":
+                if host == "google.com" and "adservice" in pattern:
+                    continue
+                fail(f"network rule must not target {host}: {pattern}")
+    if "adsbygoogle" not in joined:
+        fail("proof list does not hide adsbygoogle")
+
+
+def check_manifest() -> None:
+    manifest_path = ROOT / "Extension" / "Resources" / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("manifest_version") != 3:
+        fail("manifest is not version 3")
+    if manifest.get("version") != "0.1.0":
+        fail("manifest version drifted from 0.1.0")
+    background = manifest.get("background") or {}
+    if background.get("service_worker") != "background.js":
+        fail("background service worker path is wrong")
+    for key in ("nativeMessaging", "storage"):
+        if key not in manifest.get("permissions", []):
+            fail(f"manifest missing permission {key}")
+    resources = ROOT / "Extension" / "Resources"
+    for name in ("background.js", "cosmetic.js", "youtube.js", "popup.html", "popup.css", "popup.js"):
+        if not (resources / name).exists():
+            fail(f"missing {name}")
+    for icon in manifest.get("icons", {}).values():
+        if not (resources / icon).exists():
+            fail(f"manifest icon missing: {icon}")
+    scripts = [script for entry in manifest.get("content_scripts", []) for script in entry.get("js", [])]
+    if "youtube.js" not in scripts or "cosmetic.js" not in scripts:
+        fail("content scripts are not registered")
+
+
+def check_plists() -> None:
+    app = plistlib.loads((ROOT / "App" / "Info.plist").read_bytes())
+    extension = plistlib.loads((ROOT / "Extension" / "Info.plist").read_bytes())
+    blocker = plistlib.loads((ROOT / "ContentBlocker" / "Info.plist").read_bytes())
+    group = "$(TeamIdentifierPrefix)com.quietsafari.shared"
+    for name, plist in ("app", app), ("extension", extension), ("blocker", blocker):
+        if plist.get("QuietSafariAppGroup") != group:
+            fail(f"{name} Info.plist has a different app group")
+    ext_point = extension["NSExtension"]["NSExtensionPointIdentifier"]
+    blocker_point = blocker["NSExtension"]["NSExtensionPointIdentifier"]
+    if ext_point != "com.apple.Safari.web-extension":
+        fail(f"unexpected web extension point {ext_point}")
+    if blocker_point != "com.apple.Safari.content-blocker":
+        fail(f"unexpected content blocker point {blocker_point}")
+    if "SafariWebExtensionHandler" not in extension["NSExtension"]["NSExtensionPrincipalClass"]:
+        fail("web extension principal class is wrong")
+    if "ContentBlockerRequestHandler" not in blocker["NSExtension"]["NSExtensionPrincipalClass"]:
+        fail("content blocker principal class is wrong")
+    if blocker.get("CFBundleDisplayName") != "QuietSafari Content Blocker":
+        fail("content blocker display name drifted from the README")
+    for relative in (
+        "App/QuietSafari.entitlements",
+        "Extension/QuietSafariExtension.entitlements",
+        "ContentBlocker/QuietSafariContentBlocker.entitlements",
+    ):
+        data = plistlib.loads((ROOT / relative).read_bytes())
+        groups = data.get("com.apple.security.application-groups")
+        if groups != [group]:
+            fail(f"{relative} app group mismatch: {groups}")
+        if data.get("com.apple.security.app-sandbox") is not True:
+            fail(f"{relative} is not sandboxed")
+
+
+def check_identifiers() -> None:
+    xcconfig = (ROOT / "Config" / "Shared.xcconfig").read_text(encoding="utf-8")
+    if "QUIETSAFARI_BUNDLE_PREFIX = com.quietsafari.macos" not in xcconfig:
+        fail("bundle prefix drifted")
+    swift = (ROOT / "App" / "SettingsStore.swift").read_text(encoding="utf-8")
+    for needle in (
+        'defaultWebExtensionBundleID = "com.quietsafari.macos.extension"',
+        'defaultContentBlockerBundleID = "com.quietsafari.macos.content-blocker"',
+    ):
+        if needle not in swift:
+            fail(f"fallback bundle id missing: {needle}")
+    page = (ROOT / "App" / "TestPage.html").read_text(encoding="utf-8")
+    for needle in ("adsbygoogle", "google_ads_iframe_1", "div-gpt-ad-banner", "Этот блок должен быть виден"):
+        if needle not in page:
+            fail(f"test page missing {needle}")
+
+
+def check_generated() -> None:
+    for script in ("generate_icons.py", "generate_xcodeproj.py"):
+        result = subprocess.run([sys.executable, str(ROOT / "scripts" / script), "--check"], cwd=ROOT, text=True, capture_output=True)
+        if result.returncode != 0:
+            fail(result.stdout + result.stderr)
+    scheme = (ROOT / "QuietSafari.xcodeproj" / "xcshareddata" / "xcschemes" / "QuietSafari.xcscheme").read_text(encoding="utf-8")
+    ET.fromstring(scheme)
+    ET.fromstring((ROOT / "QuietSafari.xcodeproj" / "project.xcworkspace" / "contents.xcworkspacedata").read_text(encoding="utf-8"))
+    pbx = (ROOT / "QuietSafari.xcodeproj" / "project.pbxproj").read_text(encoding="utf-8")
+    if pbx.count("{") != pbx.count("}"):
+        fail("pbxproj braces are unbalanced")
+    if "DEVELOPMENT_TEAM =" in pbx:
+        fail("a team id was committed")
+    for needle in ("QuietSafariExtension", "QuietSafariContentBlocker", "com.apple.product-type.app-extension", "Embed Foundation Extensions"):
+        if needle not in pbx:
+            fail(f"pbxproj missing {needle}")
+
+
+def check_javascript() -> None:
+    node = subprocess.run(["node", "--version"], capture_output=True, text=True)
+    if node.returncode != 0:
+        print("node is not installed; skipped JS syntax check")
+        return
+    for path in (ROOT / "Extension" / "Resources").glob("*.js"):
+        result = subprocess.run(["node", "--check", str(path)], capture_output=True, text=True)
+        if result.returncode != 0:
+            fail(f"{path.name} failed node --check\n{result.stderr}")
+
+
+def main() -> None:
+    check_normalizer()
+    check_rules()
+    check_manifest()
+    check_plists()
+    check_identifiers()
+    check_generated()
+    check_javascript()
+    print("QuietSafari scaffold checks passed")
+
+
+if __name__ == "__main__":
+    main()

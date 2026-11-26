@@ -1,0 +1,4 @@
+// Optional. Copy this file to Local.xcconfig (gitignored) to pin a team
+// without using the Xcode signing menu:
+//
+// DEVELOPMENT_TEAM = YOUR_TEAM_ID

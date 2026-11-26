@@ -7,3 +7,5 @@ xcuserdata/
 Config/Local.xcconfig
 .swiftpm/
 .idea/
+__pycache__/
+*.pyc

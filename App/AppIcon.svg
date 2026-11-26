@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="QuietSafari">
+  <rect width="1024" height="1024" rx="226" fill="#A8C49A"/>
+  <g transform="translate(512 532) rotate(-32)">
+    <path fill="#ffffff" d="M0,-254 A300,300 0 0 1 0,254 A300,300 0 0 1 0,-254 Z"/>
+  </g>
+</svg>

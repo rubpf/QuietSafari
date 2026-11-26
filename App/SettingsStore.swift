@@ -1,19 +1,27 @@
 import AppKit
 import Foundation
 import SafariServices
+import ServiceManagement
 
 /// Settings the owner sees. The app is the source of truth for the switch and the allowlist.
 /// The web extension is the source of truth for the counter it can actually observe.
 final class SettingsStore: ObservableObject {
+    static let shared = SettingsStore()
     @Published var blockingEnabled: Bool
     @Published var allowlist: [String]
     @Published var blockCookieNotices: Bool
+    @Published var hideDockIcon: Bool
+    @Published var launchAtLogin: Bool
+    @Published var currentHost = ""
     @Published var blockedCount: Int
     @Published var appGroupAvailable: Bool
     @Published var appGroupID: String
     @Published var contentBlockerEnabled: Bool?
     @Published var privacyBlockerEnabled: Bool?
     @Published var russianBlockerEnabled: Bool?
+    @Published var contentBlockerProblem = ""
+    @Published var privacyProblem = ""
+    @Published var russianProblem = ""
     @Published var webExtensionEnabled: Bool?
     @Published var filterSummary = ""
     @Published var statusMessage = ""
@@ -43,6 +51,8 @@ final class SettingsStore: ObservableObject {
         blockingEnabled = settings.blockingEnabled
         allowlist = settings.allowlist
         blockCookieNotices = settings.blockCookieNotices
+        hideDockIcon = settings.hideDockIcon
+        launchAtLogin = SMAppService.mainApp.status == .enabled
         blockedCount = QuietSafariShared.readStats().blockedCount
         appGroupAvailable = QuietSafariShared.containerURL != nil
         appGroupID = QuietSafariShared.appGroupID
@@ -61,6 +71,7 @@ final class SettingsStore: ObservableObject {
             return
         }
         started = true
+        applyDockPolicy()
         persistAndReload(userInitiated: false)
         refreshExtensionStates()
         timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
@@ -165,6 +176,10 @@ final class SettingsStore: ObservableObject {
     private func poll() {
         refreshStats()
         pollTick += 1
+        let host = QuietSafariShared.readCurrentHost()
+        if host != currentHost {
+            currentHost = host
+        }
         if pollTick % 3 == 0 {
             refreshExtensionStates()
         }
@@ -259,7 +274,59 @@ final class SettingsStore: ObservableObject {
         return nil
     }
 
+    func setHideDockIcon(_ hidden: Bool) {
+        hideDockIcon = hidden
+        applyDockPolicy()
+        let settings = QuietSafariSettings(
+            blockingEnabled: blockingEnabled,
+            allowlist: allowlist,
+            blockCookieNotices: blockCookieNotices,
+            hideDockIcon: hideDockIcon
+        )
+        if !QuietSafariShared.writeSettings(settings) {
+            statusMessage = "Не удалось сохранить настройку значка."
+            statusIsError = true
+        }
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+            statusMessage = enabled ? "QuietSafari откроется при входе в систему." : "Автозапуск выключен."
+            statusIsError = false
+        } catch {
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+            statusMessage = "Автозапуск: \(error.localizedDescription)"
+            statusIsError = true
+        }
+    }
+
+    func showMainWindow() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        for window in NSApp.windows where window.canBecomeMain {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+    }
+
+    func quit() {
+        NSApp.terminate(nil)
+    }
+
+    private func applyDockPolicy() {
+        NSApp.setActivationPolicy(hideDockIcon ? .accessory : .regular)
+    }
+
     private func decide(api: Bool?, servedName: String, reloadOK: Bool?, sawAPITrue: inout Bool) -> Bool? {
+        if reloadOK == false {
+            return false
+        }
         if api == true {
             sawAPITrue = true
             return true
@@ -281,7 +348,8 @@ final class SettingsStore: ObservableObject {
         let settings = QuietSafariSettings(
             blockingEnabled: blockingEnabled,
             allowlist: allowlist,
-            blockCookieNotices: blockCookieNotices
+            blockCookieNotices: blockCookieNotices,
+            hideDockIcon: hideDockIcon
         )
         isBusy = true
         reloadGeneration += 1
@@ -331,7 +399,7 @@ final class SettingsStore: ObservableObject {
             outcome.russian = error
             group.leave()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 40) { [weak self] in
             guard let self, generation == self.reloadGeneration, self.isBusy else { return }
             self.finishReload(generation: generation, userInitiated: userInitiated, outcome: outcome, timedOut: true)
         }
@@ -343,6 +411,9 @@ final class SettingsStore: ObservableObject {
     private func finishReload(generation: Int, userInitiated: Bool, outcome: ReloadOutcome, timedOut: Bool) {
         guard generation == reloadGeneration else { return }
         isBusy = false
+        contentBlockerProblem = outcome.ads?.localizedDescription ?? ""
+        privacyProblem = outcome.privacy?.localizedDescription ?? ""
+        russianProblem = outcome.russian?.localizedDescription ?? ""
         contentBlockerReloadOK = outcome.ads == nil && !timedOut
         privacyReloadOK = outcome.privacy == nil && !timedOut
         russianReloadOK = outcome.russian == nil && !timedOut
@@ -352,24 +423,28 @@ final class SettingsStore: ObservableObject {
             if outcome.russian == nil { russianReloadOK = nil }
         }
         refreshExtensionStates()
-        guard userInitiated else { return }
-        if timedOut && outcome.ads == nil && outcome.privacy == nil && outcome.russian == nil {
-            statusMessage = "Safari слишком долго принимает правила. Закройте Safari, удалите старую копию QuietSafari из DerivedData (раздел README «Две копии одного расширения») и нажмите Run ещё раз."
+        let failures: [(String, Error?)] = [
+            ("QuietSafari Content Blocker", outcome.ads),
+            ("QuietSafari Privacy", outcome.privacy),
+            ("QuietSafari Russian", outcome.russian),
+        ]
+        let lines = failures.compactMap { name, error -> String? in
+            guard let error else { return nil }
+            return "\(name): \(error.localizedDescription)"
+        }
+        if timedOut && lines.isEmpty {
+            if userInitiated {
+                statusMessage = "Safari ещё компилирует правила. Если список отклонён, здесь появится текст ошибки от Safari, а не просьба удалять сборку."
+                statusIsError = true
+            }
+            return
+        }
+        if !lines.isEmpty {
+            statusMessage = lines.joined(separator: "\n")
             statusIsError = true
             return
         }
-        let failed = [
-            outcome.ads == nil ? nil : "QuietSafari Content Blocker",
-            outcome.privacy == nil ? nil : "QuietSafari Privacy",
-            outcome.russian == nil ? nil : "QuietSafari Russian",
-        ].compactMap { $0 }
-        if failed.count == 3 {
-            statusMessage = "Не удалось применить правила: \(outcome.ads?.localizedDescription ?? ""). Включите расширения в Safari и нажмите кнопку ещё раз."
-            statusIsError = true
-        } else if !failed.isEmpty {
-            statusMessage = "\(failed.joined(separator: ", ")) не принял правила. Включите его в Safari → Настройки → Дополнения и нажмите кнопку ещё раз."
-            statusIsError = true
-        } else {
+        if userInitiated {
             statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
             statusIsError = false
         }

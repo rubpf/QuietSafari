@@ -310,7 +310,8 @@ private enum FilterPieces {
                 body += ".*"
                 wildcards += 1
             } else if character == "^" {
-                body += "([^A-Za-z0-9_%.-]|$)"
+                // WebKit rejects "|" in url-filter. Match a separator character instead.
+                body += "[^A-Za-z0-9_%.-]"
             } else if character == "$" {
                 return nil
             } else if ".+?()[]{}|\\".contains(character) {
@@ -338,6 +339,7 @@ private enum FilterPieces {
         var options = Options()
         var positive: [String] = []
         var negative: [String] = []
+        var sawDomain = false
         for piece in raw.split(separator: ",") {
             let token = piece.trimmingCharacters(in: .whitespaces)
             if token.isEmpty {
@@ -352,6 +354,7 @@ private enum FilterPieces {
             }
             name = name.lowercased()
             if name == "domain" {
+                sawDomain = true
                 for domain in value.split(separator: "|") {
                     var text = domain.trimmingCharacters(in: .whitespaces).lowercased()
                     let domainNegated = text.hasPrefix("~")
@@ -404,6 +407,9 @@ private enum FilterPieces {
         if !options.domainsIf.isEmpty && !options.domainsUnless.isEmpty {
             return nil
         }
+        if sawDomain && options.domainsIf.isEmpty && options.domainsUnless.isEmpty {
+            return nil
+        }
         return options
     }
 
@@ -416,6 +422,9 @@ private enum FilterPieces {
             text = String(text.dropFirst(4))
         }
         if text.isEmpty || text.contains(" ") || text.contains("/") || text.contains("*") {
+            return ""
+        }
+        if text.unicodeScalars.contains(where: { $0.value > 127 }) {
             return ""
         }
         return text

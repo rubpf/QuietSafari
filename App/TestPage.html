@@ -34,7 +34,12 @@
       border-radius: 12px;
       line-height: 1.45;
     }
-    #qs-net { line-height: 1.45; }
+    .how {
+      margin: -8px 0 16px;
+      color: #3a3a3c;
+      font-size: 14px;
+    }
+    #qs-net, #qs-ext { line-height: 1.45; }
   </style>
 </head>
 <body>
@@ -42,13 +47,17 @@
     <h1>Проверка QuietSafari</h1>
     <p class="note">Если ниже виден красный прямоугольник со словом «РЕКЛАМА», блокировка ещё не работает. Зелёный блок с обычным текстом должен остаться.</p>
 
-    <ins class="adsbygoogle ad">РЕКЛАМА</ins>
+    <ins class="adsbygoogle ad" id="slot-adsense">РЕКЛАМА</ins>
+    <p class="how" id="how-adsense">Проверяем, кто скрыл первый блок…</p>
     <div id="google_ads_iframe_1" class="ad">РЕКЛАМА</div>
+    <p class="how" id="how-iframe">Проверяем, кто скрыл второй блок…</p>
     <div id="div-gpt-ad-banner" class="ad">РЕКЛАМА</div>
+    <p class="how" id="how-gpt">Проверяем, кто скрыл третий блок…</p>
 
     <p class="keep" id="keep">Этот блок должен быть виден. Если его нет, правила слишком широкие — так быть не должно.</p>
     <p id="qs-net">Проверяем, обрывается ли запрос к рекламной сети…</p>
-    <p class="note">Ролики YouTube этой страницей не проверяются. Откройте youtube.com, включите ролик и посмотрите, спрятались ли баннеры и пропала ли видеореклама. Полная поддержка YouTube — следующий крупный этап, сейчас работает только базовая попытка.</p>
+    <p id="qs-ext">Проверяем, запустился ли скрипт веб-расширения…</p>
+    <p class="note">Ролики YouTube этой страницей не проверяются. Откройте youtube.com и включите ролик.</p>
   </main>
   <script>
     var settled = false;
@@ -59,11 +68,55 @@
       settled = true;
       var line = document.getElementById("qs-net");
       if (blocked) {
-        line.textContent = "Рекламный адрес не загрузился. Если интернет есть и включён QuietSafari Content Blocker, сетевая блокировка работает.";
+        line.textContent = "Рекламный адрес не загрузился. Это сделал блокировщик контента (сетевое правило), если интернет есть.";
       } else {
-        line.textContent = "Рекламный скрипт загрузился. Включите «QuietSafari Content Blocker» в Safari и обновите страницу.";
+        line.textContent = "Рекламный скрипт загрузился. Сетевое правило Content Blocker на этот адрес не сработало.";
       }
     }
+    function mechanism(node) {
+      if (!node) {
+        return "блок не найден";
+      }
+      if (document.documentElement.dataset.qsAllowlisted === "1") {
+        return "не скрыт: 127.0.0.1 в белом списке";
+      }
+      var hidden = getComputedStyle(node).display === "none";
+      if (node.dataset.qsBy === "extension") {
+        return hidden ? "скрыто веб-расширением" : "веб-расширение отметило блок, но он виден";
+      }
+      if (hidden) {
+        return "скрыто блокировщиком контента";
+      }
+      return "не скрыт";
+    }
+    function reportSlots() {
+      var pairs = [
+        ["slot-adsense", "how-adsense"],
+        ["google_ads_iframe_1", "how-iframe"],
+        ["div-gpt-ad-banner", "how-gpt"]
+      ];
+      for (var i = 0; i < pairs.length; i += 1) {
+        var node = document.getElementById(pairs[i][0]);
+        var line = document.getElementById(pairs[i][1]);
+        if (line) {
+          line.textContent = mechanism(node);
+        }
+      }
+      var ext = document.getElementById("qs-ext");
+      if (!ext) {
+        return;
+      }
+      if (document.documentElement.dataset.qsAllowlisted === "1") {
+        ext.textContent = "Веб-расширение запустилось и не прячет блоки: 127.0.0.1 есть в белом списке. Удалите его в окне QuietSafari.";
+      } else if (document.documentElement.dataset.qsCosmeticSeen === "1") {
+        ext.textContent = "Скрипт веб-расширения на этой странице запустился.";
+      } else {
+        ext.textContent = "Скрипт веб-расширения на этой странице не запустился. Проверьте галочку QuietSafari и доступ ко всем сайтам.";
+      }
+    }
+    setTimeout(reportSlots, 400);
+    setTimeout(reportSlots, 1500);
+    setTimeout(reportSlots, 3000);
     setTimeout(function () { markNetwork(true); }, 8000);
   </script>
   <script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" onload="markNetwork(false)" onerror="markNetwork(true)"></script>

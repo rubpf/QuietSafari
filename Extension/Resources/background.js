@@ -101,5 +101,39 @@ if (ext.runtime.onInstalled) {
   });
 }
 
+function reportActiveTab() {
+  if (!ext.tabs || !ext.tabs.query) {
+    return;
+  }
+  ext.tabs
+    .query({ active: true, lastFocusedWindow: true })
+    .then((tabs) => {
+      const url = tabs && tabs[0] && tabs[0].url;
+      if (!url) {
+        return;
+      }
+      let host = "";
+      try {
+        host = new URL(url).hostname;
+      } catch (error) {
+        host = "";
+      }
+      if (!host) {
+        return;
+      }
+      if (host.startsWith("www.")) {
+        host = host.slice(4);
+      }
+      return ext.runtime.sendNativeMessage(NATIVE_APP, { type: "activeHost", host });
+    })
+    .catch(() => {});
+}
+
+if (ext.tabs && ext.tabs.onActivated) {
+  ext.tabs.onActivated.addListener(() => reportActiveTab());
+  ext.tabs.onUpdated.addListener(() => reportActiveTab());
+}
+
 scheduleSync();
 syncFromApp();
+reportActiveTab();

@@ -12,7 +12,7 @@ enum QuietSafariShared {
     static let rulesFileName = "blockerList.json"
     static let privacyRulesFileName = "privacyList.json"
     static let russianRulesFileName = "russianList.json"
-    static let bundledFilterVersion = 3
+    static let bundledFilterVersion = 4
 
     static let log = Logger(subsystem: "com.quietsafari.macos", category: "shared")
 
@@ -46,6 +46,21 @@ enum QuietSafariShared {
 
     static func readSettings() -> QuietSafariSettings {
         readJSON(settingsFileName, fallback: .default)
+    }
+
+    static func writeCurrentHost(_ host: String) {
+        guard let url = fileURL("current-host.txt") else {
+            return
+        }
+        try? Data(host.utf8).write(to: url, options: .atomic)
+    }
+
+    static func readCurrentHost() -> String {
+        guard let url = fileURL("current-host.txt"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else {
+            return ""
+        }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     static func readStats() -> QuietSafariStats {
@@ -134,13 +149,20 @@ struct QuietSafariSettings: Codable, Equatable {
     var blockingEnabled: Bool
     var allowlist: [String]
     var blockCookieNotices: Bool
+    var hideDockIcon: Bool
 
-    static let `default` = QuietSafariSettings(blockingEnabled: true, allowlist: [], blockCookieNotices: false)
+    static let `default` = QuietSafariSettings(
+        blockingEnabled: true,
+        allowlist: [],
+        blockCookieNotices: false,
+        hideDockIcon: false
+    )
 
-    init(blockingEnabled: Bool, allowlist: [String], blockCookieNotices: Bool = false) {
+    init(blockingEnabled: Bool, allowlist: [String], blockCookieNotices: Bool = false, hideDockIcon: Bool = false) {
         self.blockingEnabled = blockingEnabled
         self.allowlist = allowlist
         self.blockCookieNotices = blockCookieNotices
+        self.hideDockIcon = hideDockIcon
     }
 
     init(from decoder: Decoder) throws {
@@ -148,6 +170,7 @@ struct QuietSafariSettings: Codable, Equatable {
         blockingEnabled = try container.decodeIfPresent(Bool.self, forKey: .blockingEnabled) ?? true
         allowlist = try container.decodeIfPresent([String].self, forKey: .allowlist) ?? []
         blockCookieNotices = try container.decodeIfPresent(Bool.self, forKey: .blockCookieNotices) ?? false
+        hideDockIcon = try container.decodeIfPresent(Bool.self, forKey: .hideDockIcon) ?? false
     }
 }
 
@@ -161,6 +184,15 @@ enum QuietSafariBridge {
     /// Reply to a Safari web extension native message. The payload is a property list.
     static func reply(to message: [String: Any]?) -> [String: Any] {
         let type = message?["type"] as? String ?? "getState"
+        if type == "activeHost" {
+            let host = (message?["host"] as? String ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            if !host.isEmpty {
+                QuietSafariShared.writeCurrentHost(host)
+            }
+            return statePayload()
+        }
         if type == "setBlockedCount" {
             let count = intValue(message?["blockedCount"])
             let wrote = QuietSafariShared.writeStats(QuietSafariStats(blockedCount: max(0, count)))

@@ -106,7 +106,10 @@ def abp_to_regex(pattern: str) -> str | None:
         if char == "*":
             out.append(".*")
         elif char == "^":
-            out.append("([^A-Za-z0-9_%.-]|$)")
+            # WebKit url-filters reject disjunctions, so the ABP separator cannot
+            # be written as "(class|$)". A separator character still matches the
+            # slash or query that real ad URLs have.
+            out.append("[^A-Za-z0-9_%.-]")
         elif char in ".+?()[]{}|\\":
             out.append("\\" + char)
         elif char == "$":
@@ -178,6 +181,9 @@ def parse_options(raw: str) -> dict | None:
     domains_unless = [item for item in domains_unless if item]
     if domains_if and domains_unless:
         return None
+    if any(piece.strip().lower().startswith("domain=") or piece.strip().lower().startswith("~domain=") for piece in raw.split(",")):
+        if not domains_if and not domains_unless:
+            return None
     return {
         "types": resource_types,
         "load": load_type,
@@ -195,6 +201,8 @@ def normalize_domain(domain: str) -> str:
     if domain.startswith("www."):
         domain = domain[4:]
     if not domain or " " in domain or "/" in domain or "*" in domain:
+        return ""
+    if any(ord(char) > 127 for char in domain):
         return ""
     return domain
 
@@ -437,6 +445,7 @@ def self_test() -> None:
             raise SystemExit(f"{line!r} kept={got}, expected {kept}")
     pattern = abp_to_regex("||doubleclick.net^")
     assert pattern is not None
+    assert "|" not in pattern
     compiled = re.compile(pattern, re.IGNORECASE)
     assert compiled.search("https://ad.doubleclick.net/ddm/track")
     assert not compiled.search("https://notdoubleclick.net/")
@@ -725,7 +734,7 @@ def main() -> None:
     RUSSIAN_OUT.write_text(russian_json, encoding="utf-8")
     ENGINE_RULES_OUT.write_text(engine_js, encoding="utf-8")
     counts = {
-        "version": 3,
+        "version": 4,
         "adCount": summary["ads"],
         "privacyCount": summary["privacy"],
         "russianCount": summary["russian"],

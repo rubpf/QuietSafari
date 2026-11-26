@@ -3,7 +3,7 @@ import SwiftUI
 /// Settings window. Visible strings are Russian because the owner runs the app himself.
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var store = SettingsStore()
+    @EnvironmentObject private var store: SettingsStore
     @State private var draft = ""
     @State private var draftMessage = ""
 
@@ -21,7 +21,7 @@ struct ContentView: View {
             }
             .formStyle(.grouped)
         }
-        .frame(minWidth: 560, minHeight: 680)
+        .frame(minWidth: 580, minHeight: 720)
         .onAppear { store.start() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -30,22 +30,27 @@ struct ContentView: View {
         }
     }
 
+    private var accent: Color { Color(red: 0.11, green: 0.48, blue: 0.28) }
+
     private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 14) {
             Image(systemName: "leaf.fill")
-                .font(.system(size: 28))
-                .foregroundStyle(Color(red: 0.11, green: 0.48, blue: 0.28))
-            VStack(alignment: .leading, spacing: 2) {
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(accent)
+                .frame(width: 44, height: 44)
+                .background(accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
                 Text("QuietSafari")
-                    .font(.title2.bold())
+                    .font(.title2.weight(.semibold))
                 Text("Блокировка рекламы в Safari")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             Spacer()
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 22)
+        .padding(.top, 18)
+        .padding(.bottom, 10)
     }
 
     private var blockingSection: some View {
@@ -156,10 +161,10 @@ struct ContentView: View {
 
     private var stateSection: some View {
         Section {
-            labeledState("QuietSafari Content Blocker", enabled: store.contentBlockerEnabled)
-            labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled)
-            labeledState("QuietSafari Russian", enabled: store.russianBlockerEnabled)
-            labeledState("QuietSafari", enabled: store.webExtensionEnabled)
+            labeledState("QuietSafari Content Blocker", enabled: store.contentBlockerEnabled, problem: store.contentBlockerProblem)
+            labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled, problem: store.privacyProblem)
+            labeledState("QuietSafari Russian", enabled: store.russianBlockerEnabled, problem: store.russianProblem)
+            labeledState("QuietSafari", enabled: store.webExtensionEnabled, problem: "")
             LabeledContent("Общая папка") {
                 Text(store.appGroupAvailable ? "доступна" : "недоступна")
                     .foregroundStyle(store.appGroupAvailable ? Color.secondary : Color.orange)
@@ -184,19 +189,42 @@ struct ContentView: View {
         }
     }
 
-    private func labeledState(_ title: String, enabled: Bool?) -> some View {
-        LabeledContent(title) {
-            switch enabled {
-            case true:
-                Text("включено")
-                    .foregroundStyle(.secondary)
-            case false:
-                Text("выключено")
-                    .foregroundStyle(.orange)
-            case nil:
-                Text("ещё не проверено")
-                    .foregroundStyle(.secondary)
+    private func labeledState(_ title: String, enabled: Bool?, problem: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            LabeledContent(title) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(dotColor(enabled, problem: problem))
+                        .frame(width: 8, height: 8)
+                    Text(problem.isEmpty ? statusWord(enabled) : "ошибка")
+                        .foregroundStyle(problem.isEmpty && enabled != false ? Color.secondary : Color.orange)
+                }
             }
+            if !problem.isEmpty {
+                Text(problem)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func dotColor(_ enabled: Bool?, problem: String) -> Color {
+        if !problem.isEmpty || enabled == false {
+            return .orange
+        }
+        if enabled == true {
+            return accent
+        }
+        return Color.secondary.opacity(0.45)
+    }
+
+    private func statusWord(_ enabled: Bool?) -> String {
+        switch enabled {
+        case true: return "включено"
+        case false: return "выключено"
+        case nil: return "ещё не проверено"
         }
     }
 

@@ -14,8 +14,9 @@ APPICON = ROOT / "App" / "Assets.xcassets" / "AppIcon.appiconset"
 ACCENT = ROOT / "App" / "Assets.xcassets" / "AccentColor.colorset"
 IMAGES = ROOT / "Extension" / "Resources" / "images"
 
-GREEN = (18, 110, 68)
+GREEN = (168, 196, 154)
 WHITE = (255, 255, 255)
+INK = (20, 20, 20)
 
 APP_ICONS = [
     ("icon_16x16.png", "16x16", "1x", 16),
@@ -79,7 +80,22 @@ def composite(dst, src_rgb, src_a: float):
     return (out[0], out[1], out[2], out[3])
 
 
-def render(size: int) -> list[list[tuple[int, int, int, int]]]:
+def leaf_coverage(px: float, py: float, size: float) -> float:
+    """Tilted almond, the plain leaf from the chosen icon sheet."""
+    dx = px - size * 0.50
+    dy = py - size * 0.52
+    cosine = math.cos(0.56)
+    sine = math.sin(0.56)
+    local_x = dx * cosine - dy * sine
+    local_y = dx * sine + dy * cosine
+    radius = size * 0.40
+    offset = size * 0.18
+    left = math.hypot(local_x + offset, local_y) - radius
+    right = math.hypot(local_x - offset, local_y) - radius
+    return coverage(max(left, right))
+
+
+def render(size: int, monochrome: bool = False) -> list[list[tuple[int, int, int, int]]]:
     radius = size * 0.22
     rows = []
     for y in range(size):
@@ -88,10 +104,9 @@ def render(size: int) -> list[list[tuple[int, int, int, int]]]:
             px = x + 0.5
             py = y + 0.5
             pixel = (0, 0, 0, 0)
-            pixel = composite(pixel, GREEN, coverage(sd_round_rect(px, py, size, radius)))
-            # A solid leaf. A same-color vein hollowed this out into a ring at small sizes.
-            leaf = ellipse_coverage(px, py, size * 0.48, size * 0.50, size * 0.20, size * 0.30, -0.65)
-            pixel = composite(pixel, WHITE, leaf)
+            if not monochrome:
+                pixel = composite(pixel, GREEN, coverage(sd_round_rect(px, py, size, radius)))
+            pixel = composite(pixel, INK if monochrome else WHITE, leaf_coverage(px, py, size))
             row.append(pixel)
         rows.append(row)
     return rows
@@ -115,12 +130,13 @@ def png_bytes(rows: list[list[tuple[int, int, int, int]]]) -> bytes:
 
 def outputs() -> dict[Path, bytes]:
     files: dict[Path, bytes] = {}
-    cache: dict[int, bytes] = {}
+    cache: dict[tuple[int, bool], bytes] = {}
 
-    def png(size: int) -> bytes:
-        if size not in cache:
-            cache[size] = png_bytes(render(size))
-        return cache[size]
+    def png(size: int, monochrome: bool = False) -> bytes:
+        key = (size, monochrome)
+        if key not in cache:
+            cache[key] = png_bytes(render(size, monochrome))
+        return cache[key]
 
     files[ROOT / "App" / "Assets.xcassets" / "Contents.json"] = contents_json({"info": {"author": "xcode", "version": 1}})
     images = []
@@ -155,7 +171,20 @@ def outputs() -> dict[Path, bytes]:
         }
     )
     for pixels in (16, 32, 48, 128):
-        files[IMAGES / f"icon-{pixels}.png"] = png(pixels)
+        files[IMAGES / f"icon-{pixels}.png"] = png(pixels, monochrome=True)
+    menu = ROOT / "App" / "Assets.xcassets" / "MenuBarIcon.imageset"
+    files[menu / "leaf.png"] = png(18, monochrome=True)
+    files[menu / "leaf@2x.png"] = png(36, monochrome=True)
+    files[menu / "Contents.json"] = contents_json(
+        {
+            "images": [
+                {"filename": "leaf.png", "idiom": "mac", "scale": "1x"},
+                {"filename": "leaf@2x.png", "idiom": "mac", "scale": "2x"},
+            ],
+            "info": {"author": "xcode", "version": 1},
+            "properties": {"template-rendering-intent": "template"},
+        }
+    )
     return files
 
 

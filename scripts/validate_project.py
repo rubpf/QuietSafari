@@ -85,6 +85,9 @@ def check_normalizer() -> None:
 
 def check_rules() -> None:
     convert_filters.self_test()
+    import validate_safari_rules
+
+    validate_safari_rules.main()
     allowed_actions = {"block", "block-cookies", "css-display-none", "ignore-previous-rules", "make-https"}
     protected = [
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -204,6 +207,9 @@ def check_manifest() -> None:
         fail("content scripts are not registered")
     if "engine.js" not in scripts or "engine-rules.js" not in scripts or "cookies.js" not in scripts:
         fail("engine or cookie script is not registered")
+    cosmetic_entry = next(entry for entry in manifest.get("content_scripts", []) if "cosmetic.js" in entry.get("js", []))
+    if cosmetic_entry.get("run_at") != "document_start":
+        fail("cosmetic.js must run at document_start so an ad script cannot delay it")
     worlds = [entry.get("world") for entry in manifest.get("content_scripts", [])]
     if "MAIN" not in worlds:
         fail("YouTube page-world script is not declared")

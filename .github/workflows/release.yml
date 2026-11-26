@@ -60,11 +60,16 @@ jobs:
             cat dist/SHA256SUMS.txt
             echo '```'
           } > "$notes"
+          # Beta, alpha, rc, and pre tags stay pre-releases so they do not replace "latest".
+          extra=(--latest)
+          if [[ "$TAG" == *beta* || "$TAG" == *alpha* || "$TAG" == *rc* || "$TAG" == *pre* ]]; then
+            extra=(--prerelease)
+          fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/QuietSafari.zip dist/QuietSafari.dmg dist/SHA256SUMS.txt --clobber
           else
             gh release create "$TAG" dist/QuietSafari.zip dist/QuietSafari.dmg dist/SHA256SUMS.txt \
               --title "QuietSafari ${TAG}" \
               --notes-file "$notes" \
-              --latest
+              "${extra[@]}"
           fi

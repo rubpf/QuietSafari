@@ -91,8 +91,12 @@ def check_rules() -> None:
         "https://www.youtube.com/",
         "https://rr1---sn-xxxx.googlevideo.com/videoplayback?id=1",
         "https://www.google.com/",
+        "https://yandex.ru/",
+        "https://ya.ru/",
+        "https://yandex.ru/maps/213/moscow/",
+        "https://yastatic.net/s3/home-static/logo.png",
     ]
-    for name, minimum in (("blockerList.json", 20000), ("privacyList.json", 20000)):
+    for name, minimum in (("blockerList.json", 20000), ("privacyList.json", 20000), ("russianList.json", 8000)):
         path = ROOT / "Shared" / name
         raw = path.read_bytes()
         if len(raw) > 7_500_000:
@@ -110,7 +114,7 @@ def check_rules() -> None:
             pattern = rule["trigger"]["url-filter"]
             if pattern == ".*":
                 fail(f"{name} has a block-everything rule")
-            if not any(piece in pattern for piece in ("youtube", "googlevideo", "ytimg", "google.com")):
+            if not any(piece in pattern for piece in ("youtube", "googlevideo", "ytimg", "google.com", "yandex", "yastatic", "ya.ru")):
                 continue
             try:
                 compiled_re = re.compile(pattern, re.IGNORECASE)
@@ -127,6 +131,44 @@ def check_rules() -> None:
     )
     if "adsbygoogle" not in selectors:
         fail("EasyList conversion dropped the adsbygoogle cosmetic rule")
+    russian = json.loads((ROOT / "Shared" / "russianList.json").read_text(encoding="utf-8"))
+
+    def hits(rules: list, url: str) -> bool:
+        for rule in rules:
+            if (rule.get("action") or {}).get("type") != "block":
+                continue
+            pattern = rule["trigger"]["url-filter"]
+            if "yandex" not in pattern and "yastatic" not in pattern and "adfox" not in pattern:
+                continue
+            if re.search(pattern, url, re.IGNORECASE):
+                return True
+        return False
+
+    if not hits(russian, "https://an.yandex.ru/system/context.js"):
+        fail("russian list does not block an.yandex.ru")
+    if not hits(russian, "https://yandex.ru/ads/system/context.js"):
+        fail("russian list does not block yandex.ru/ads")
+    if not hits(russian, "https://yastatic.net/partner-code/context.js"):
+        fail("russian list does not block yastatic partner code")
+    russian_selectors = "\n".join(
+        (rule.get("action") or {}).get("selector", "")
+        for rule in russian
+        if (rule.get("action") or {}).get("type") == "css-display-none"
+    )
+    if 'div[id^="yandex_rtb"]' not in russian_selectors:
+        fail("russian list is missing the yandex_rtb cosmetic rule")
+    privacy = json.loads((ROOT / "Shared" / "privacyList.json").read_text(encoding="utf-8"))
+    if not hits(privacy, "https://mc.yandex.ru/watch/1"):
+        fail("privacy list does not block mc.yandex.ru")
+    if hits(russian, "https://mc.yandex.ru/watch/1") and not hits(privacy, "https://mc.yandex.ru/watch/1"):
+        fail("mc.yandex.ru must stay on the privacy list")
+    engine = (ROOT / "Extension" / "Resources" / "engine.js").read_text(encoding="utf-8")
+    for needle in ("set-constant", "abort-on-property-read", "json-prune", "MutationObserver", ":has("):
+        if needle not in engine:
+            fail(f"engine.js missing {needle}")
+    rules_js = (ROOT / "Extension" / "Resources" / "engine-rules.js").read_text(encoding="utf-8")
+    if "QUIETSAFARI_ENGINE_RULES" not in rules_js:
+        fail("engine-rules.js was not generated")
     youtube = (ROOT / "Extension" / "Resources" / "youtube.js").read_text(encoding="utf-8")
     main = (ROOT / "Extension" / "Resources" / "youtube-main.js").read_text(encoding="utf-8")
     for needle in ("ytd-ad-slot-renderer", "ad-showing", "movie_player"):
@@ -142,8 +184,8 @@ def check_manifest() -> None:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("manifest_version") != 3:
         fail("manifest is not version 3")
-    if manifest.get("version") != "0.2.0":
-        fail("manifest version drifted from 0.2.0")
+    if manifest.get("version") != "0.3.0":
+        fail("manifest version drifted from 0.3.0")
     background = manifest.get("background") or {}
     if background.get("service_worker") != "background.js":
         fail("background service worker path is wrong")
@@ -151,7 +193,7 @@ def check_manifest() -> None:
         if key not in manifest.get("permissions", []):
             fail(f"manifest missing permission {key}")
     resources = ROOT / "Extension" / "Resources"
-    for name in ("background.js", "cosmetic.js", "youtube.js", "youtube-main.js", "popup.html", "popup.css", "popup.js"):
+    for name in ("background.js", "cosmetic.js", "youtube.js", "youtube-main.js", "popup.html", "popup.css", "popup.js", "engine.js", "engine-rules.js", "cookies.js"):
         if not (resources / name).exists():
             fail(f"missing {name}")
     for icon in manifest.get("icons", {}).values():
@@ -160,6 +202,8 @@ def check_manifest() -> None:
     scripts = [script for entry in manifest.get("content_scripts", []) for script in entry.get("js", [])]
     if "youtube.js" not in scripts or "youtube-main.js" not in scripts or "cosmetic.js" not in scripts:
         fail("content scripts are not registered")
+    if "engine.js" not in scripts or "engine-rules.js" not in scripts or "cookies.js" not in scripts:
+        fail("engine or cookie script is not registered")
     worlds = [entry.get("world") for entry in manifest.get("content_scripts", [])]
     if "MAIN" not in worlds:
         fail("YouTube page-world script is not declared")
@@ -192,6 +236,13 @@ def check_plists() -> None:
         fail("privacy display name drifted")
     if privacy.get("QuietSafariRulesName") != "privacyList.json":
         fail("privacy rules file name drifted")
+    russian_plist = plistlib.loads((ROOT / "Russian" / "Info.plist").read_bytes())
+    if russian_plist["NSExtension"]["NSExtensionPointIdentifier"] != "com.apple.Safari.content-blocker":
+        fail("russian extension is not a content blocker")
+    if russian_plist.get("CFBundleDisplayName") != "QuietSafari Russian":
+        fail("russian display name drifted")
+    if russian_plist.get("QuietSafariRulesName") != "russianList.json":
+        fail("russian rules file name drifted")
     for relative in (
         "App/QuietSafari.entitlements",
         "Extension/QuietSafariExtension.entitlements",
@@ -211,6 +262,8 @@ def check_identifiers() -> None:
         fail("bundle prefix drifted")
     if "QUIETSAFARI_PRIVACY_BUNDLE_ID" not in xcconfig:
         fail("privacy bundle id is missing from the xcconfig")
+    if "QUIETSAFARI_RUSSIAN_BUNDLE_ID" not in xcconfig:
+        fail("russian bundle id is missing from the xcconfig")
     swift = (ROOT / "App" / "SettingsStore.swift").read_text(encoding="utf-8")
     for needle in (
         'defaultWebExtensionBundleID = "com.quietsafari.macos.extension"',
@@ -237,7 +290,7 @@ def check_generated() -> None:
         fail("pbxproj braces are unbalanced")
     if "DEVELOPMENT_TEAM =" in pbx:
         fail("a team id was committed")
-    for needle in ("QuietSafariExtension", "QuietSafariContentBlocker", "com.apple.product-type.app-extension", "Embed Foundation Extensions"):
+    for needle in ("QuietSafariExtension", "QuietSafariContentBlocker", "QuietSafariRussian", "com.apple.product-type.app-extension", "Embed Foundation Extensions"):
         if needle not in pbx:
             fail(f"pbxproj missing {needle}")
 

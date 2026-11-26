@@ -11,6 +11,11 @@ const SELECTORS = [
   'iframe[id^="google_ads_iframe"]',
   'div[id^="google_ads_iframe"]',
   'div[id^="div-gpt-ad"]',
+  'div[id^="yandex_rtb"]',
+  'div[class^="yandex_rtb"]',
+  'div[id^="adfox_"]',
+  ".yandex-rtb",
+  ".yandex-rtb-block",
 ];
 
 function hostAllowed(allowlist) {
@@ -48,10 +53,23 @@ async function main() {
     return;
   }
   document.documentElement.dataset.qsCosmetic = "1";
-  const count = hideAndCount();
-  if (count > 0) {
-    ext.runtime.sendMessage({ type: "addBlocked", count });
+  let reported = hideAndCount();
+  if (reported > 0) {
+    ext.runtime.sendMessage({ type: "addBlocked", count: reported });
   }
+  const root = document.documentElement;
+  if (!root) {
+    return;
+  }
+  const observer = new MutationObserver(() => {
+    const extra = hideAndCount();
+    if (extra > reported) {
+      ext.runtime.sendMessage({ type: "addBlocked", count: extra - reported });
+      reported = extra;
+    }
+  });
+  observer.observe(root, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 20000);
 }
 
 main();

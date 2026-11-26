@@ -7,11 +7,13 @@ import SafariServices
 final class SettingsStore: ObservableObject {
     @Published var blockingEnabled: Bool
     @Published var allowlist: [String]
+    @Published var blockCookieNotices: Bool
     @Published var blockedCount: Int
     @Published var appGroupAvailable: Bool
     @Published var appGroupID: String
     @Published var contentBlockerEnabled: Bool?
     @Published var privacyBlockerEnabled: Bool?
+    @Published var russianBlockerEnabled: Bool?
     @Published var webExtensionEnabled: Bool?
     @Published var filterSummary = ""
     @Published var statusMessage = ""
@@ -26,8 +28,11 @@ final class SettingsStore: ObservableObject {
     private let processStartedAt = Date().timeIntervalSince1970
     private var contentBlockerAPIConfirmed = false
     private var privacyAPIConfirmed = false
+    private var russianAPIConfirmed = false
     private var contentBlockerReloadOK: Bool?
     private var privacyReloadOK: Bool?
+    private var russianReloadOK: Bool?
+    private var statusTimedOut = false
 
     deinit {
         timer?.invalidate()
@@ -37,6 +42,7 @@ final class SettingsStore: ObservableObject {
         let settings = QuietSafariShared.readSettings()
         blockingEnabled = settings.blockingEnabled
         allowlist = settings.allowlist
+        blockCookieNotices = settings.blockCookieNotices
         blockedCount = QuietSafariShared.readStats().blockedCount
         appGroupAvailable = QuietSafariShared.containerURL != nil
         appGroupID = QuietSafariShared.appGroupID
@@ -59,6 +65,18 @@ final class SettingsStore: ObservableObject {
         refreshExtensionStates()
         timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.poll()
+        }
+    }
+
+    func refreshNow() {
+        refreshExtensionStates()
+    }
+
+    func setBlockCookieNotices(_ enabled: Bool) {
+        let previous = blockCookieNotices
+        blockCookieNotices = enabled
+        persistAndReload(userInitiated: true) { [weak self] in
+            self?.blockCookieNotices = previous
         }
     }
 
@@ -96,7 +114,7 @@ final class SettingsStore: ObservableObject {
 
     func reapplyRules() {
         isBusy = true
-        statusMessage = "Скачиваю EasyList и EasyPrivacy…"
+        statusMessage = "Скачиваю EasyList, EasyPrivacy и RU AdList…"
         statusIsError = false
         FilterLibrary.download { [weak self] result in
             guard let self else {
@@ -150,6 +168,23 @@ final class SettingsStore: ObservableObject {
         if pollTick % 3 == 0 {
             refreshExtensionStates()
         }
+        settleUnknownStates()
+    }
+
+    /// Safari sometimes never calls back for a large content blocker, which used to
+    /// leave the row on "ещё не проверено" forever. After a short wait, say it is off
+    /// and point at the duplicate-extension cleanup.
+    private func settleUnknownStates() {
+        guard !statusTimedOut else { return }
+        guard Date().timeIntervalSince1970 - processStartedAt > 12 else { return }
+        let unknown = contentBlockerEnabled == nil || privacyBlockerEnabled == nil || russianBlockerEnabled == nil
+        guard unknown else { return }
+        statusTimedOut = true
+        if contentBlockerEnabled == nil { contentBlockerEnabled = false }
+        if privacyBlockerEnabled == nil { privacyBlockerEnabled = false }
+        if russianBlockerEnabled == nil { russianBlockerEnabled = false }
+        statusMessage = "Safari не ответил про одно из расширений. Закройте Safari, удалите старые копии QuietSafari (раздел README «Две копии одного расширения») и нажмите Run."
+        statusIsError = true
     }
 
     private func refreshStats() {
@@ -164,13 +199,13 @@ final class SettingsStore: ObservableObject {
     private func refreshExtensionStates() {
         let adsID = QuietSafariIdentity.contentBlockerBundleID
         let privacyID = QuietSafariIdentity.privacyBundleID
+        let russianID = QuietSafariIdentity.russianBundleID
         let extensionID = QuietSafariIdentity.webExtensionBundleID
-        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: adsID) { state, _ in
+        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: adsID) { state, error in
             DispatchQueue.main.async {
-                let api = state.map(\.isEnabled)
                 var confirmed = self.contentBlockerAPIConfirmed
                 self.contentBlockerEnabled = self.decide(
-                    api: api,
+                    api: Self.apiFlag(state: state, error: error),
                     servedName: QuietSafariShared.rulesFileName,
                     reloadOK: self.contentBlockerReloadOK,
                     sawAPITrue: &confirmed
@@ -178,17 +213,28 @@ final class SettingsStore: ObservableObject {
                 self.contentBlockerAPIConfirmed = confirmed
             }
         }
-        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: privacyID) { state, _ in
+        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: privacyID) { state, error in
             DispatchQueue.main.async {
-                let api = state.map(\.isEnabled)
                 var confirmed = self.privacyAPIConfirmed
                 self.privacyBlockerEnabled = self.decide(
-                    api: api,
+                    api: Self.apiFlag(state: state, error: error),
                     servedName: QuietSafariShared.privacyRulesFileName,
                     reloadOK: self.privacyReloadOK,
                     sawAPITrue: &confirmed
                 )
                 self.privacyAPIConfirmed = confirmed
+            }
+        }
+        SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: russianID) { state, error in
+            DispatchQueue.main.async {
+                var confirmed = self.russianAPIConfirmed
+                self.russianBlockerEnabled = self.decide(
+                    api: Self.apiFlag(state: state, error: error),
+                    servedName: QuietSafariShared.russianRulesFileName,
+                    reloadOK: self.russianReloadOK,
+                    sawAPITrue: &confirmed
+                )
+                self.russianAPIConfirmed = confirmed
             }
         }
         SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionID) { state, _ in
@@ -203,6 +249,16 @@ final class SettingsStore: ObservableObject {
     /// SFContentBlockerState.isEnabled has been observed stuck on false while Safari's
     /// own checkbox is on. A successful reload, or Safari asking the extension for rules,
     /// is treated as enabled until the API itself has reported true at least once.
+    private static func apiFlag(state: SFContentBlockerState?, error: Error?) -> Bool? {
+        if let state {
+            return state.isEnabled
+        }
+        if error != nil {
+            return false
+        }
+        return nil
+    }
+
     private func decide(api: Bool?, servedName: String, reloadOK: Bool?, sawAPITrue: inout Bool) -> Bool? {
         if api == true {
             sawAPITrue = true
@@ -222,7 +278,11 @@ final class SettingsStore: ObservableObject {
     }
 
     private func persistAndReload(userInitiated: Bool, revert: (() -> Void)? = nil) {
-        let settings = QuietSafariSettings(blockingEnabled: blockingEnabled, allowlist: allowlist)
+        let settings = QuietSafariSettings(
+            blockingEnabled: blockingEnabled,
+            allowlist: allowlist,
+            blockCookieNotices: blockCookieNotices
+        )
         isBusy = true
         reloadGeneration += 1
         let generation = reloadGeneration
@@ -266,28 +326,52 @@ final class SettingsStore: ObservableObject {
             outcome.privacy = error
             group.leave()
         }
+        group.enter()
+        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.russianBundleID) { error in
+            outcome.russian = error
+            group.leave()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in
+            guard let self, generation == self.reloadGeneration, self.isBusy else { return }
+            self.finishReload(generation: generation, userInitiated: userInitiated, outcome: outcome, timedOut: true)
+        }
         group.notify(queue: .main) {
-            guard generation == self.reloadGeneration else {
-                return
-            }
-            self.isBusy = false
-            self.contentBlockerReloadOK = outcome.ads == nil
-            self.privacyReloadOK = outcome.privacy == nil
-            self.refreshExtensionStates()
-            guard userInitiated else {
-                return
-            }
-            if outcome.ads != nil && outcome.privacy != nil {
-                self.statusMessage = "Не удалось применить правила: \(outcome.ads?.localizedDescription ?? ""). Если расширение выключено в Safari, включите его и нажмите кнопку ещё раз."
-                self.statusIsError = true
-            } else if outcome.ads != nil || outcome.privacy != nil {
-                let name = outcome.ads != nil ? "QuietSafari Content Blocker" : "QuietSafari Privacy"
-                self.statusMessage = "\(name) не принял правила. Включите его в Safari → Настройки → Дополнения и нажмите кнопку ещё раз."
-                self.statusIsError = true
-            } else {
-                self.statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
-                self.statusIsError = false
-            }
+            self.finishReload(generation: generation, userInitiated: userInitiated, outcome: outcome, timedOut: false)
+        }
+    }
+
+    private func finishReload(generation: Int, userInitiated: Bool, outcome: ReloadOutcome, timedOut: Bool) {
+        guard generation == reloadGeneration else { return }
+        isBusy = false
+        contentBlockerReloadOK = outcome.ads == nil && !timedOut
+        privacyReloadOK = outcome.privacy == nil && !timedOut
+        russianReloadOK = outcome.russian == nil && !timedOut
+        if timedOut {
+            if outcome.ads == nil { contentBlockerReloadOK = nil }
+            if outcome.privacy == nil { privacyReloadOK = nil }
+            if outcome.russian == nil { russianReloadOK = nil }
+        }
+        refreshExtensionStates()
+        guard userInitiated else { return }
+        if timedOut && outcome.ads == nil && outcome.privacy == nil && outcome.russian == nil {
+            statusMessage = "Safari слишком долго принимает правила. Закройте Safari, удалите старую копию QuietSafari из DerivedData (раздел README «Две копии одного расширения») и нажмите Run ещё раз."
+            statusIsError = true
+            return
+        }
+        let failed = [
+            outcome.ads == nil ? nil : "QuietSafari Content Blocker",
+            outcome.privacy == nil ? nil : "QuietSafari Privacy",
+            outcome.russian == nil ? nil : "QuietSafari Russian",
+        ].compactMap { $0 }
+        if failed.count == 3 {
+            statusMessage = "Не удалось применить правила: \(outcome.ads?.localizedDescription ?? ""). Включите расширения в Safari и нажмите кнопку ещё раз."
+            statusIsError = true
+        } else if !failed.isEmpty {
+            statusMessage = "\(failed.joined(separator: ", ")) не принял правила. Включите его в Safari → Настройки → Дополнения и нажмите кнопку ещё раз."
+            statusIsError = true
+        } else {
+            statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
+            statusIsError = false
         }
     }
 
@@ -309,12 +393,14 @@ final class SettingsStore: ObservableObject {
 private final class ReloadOutcome {
     var ads: Error?
     var privacy: Error?
+    var russian: Error?
 }
 
 enum QuietSafariIdentity {
     static let defaultWebExtensionBundleID = "com.quietsafari.macos.extension"
     static let defaultContentBlockerBundleID = "com.quietsafari.macos.content-blocker"
     static let defaultPrivacyBundleID = "com.quietsafari.macos.privacy"
+    static let defaultRussianBundleID = "com.quietsafari.macos.russian"
 
     static var webExtensionBundleID: String {
         embedded("QuietSafariExtension.appex", fallback: defaultWebExtensionBundleID)
@@ -326,6 +412,10 @@ enum QuietSafariIdentity {
 
     static var privacyBundleID: String {
         embedded("QuietSafariPrivacy.appex", fallback: defaultPrivacyBundleID)
+    }
+
+    static var russianBundleID: String {
+        embedded("QuietSafariRussian.appex", fallback: defaultRussianBundleID)
     }
 
     /// The built appex Info.plist is the identifier Safari registered. The host

@@ -17,12 +17,18 @@ ROOT = Path(__file__).resolve().parents[1]
 CACHE = Path("/tmp/qs-filters")
 ADS_OUT = ROOT / "Shared" / "blockerList.json"
 PRIVACY_OUT = ROOT / "Shared" / "privacyList.json"
+RUSSIAN_OUT = ROOT / "Shared" / "russianList.json"
+ENGINE_RULES_OUT = ROOT / "Extension" / "Resources" / "engine-rules.js"
 
 EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
 EASYPRIVACY_URL = "https://easylist.to/easylist/easyprivacy.txt"
+# RU AdList. License: CC BY 3.0 (see the file header).
+RU_ADLIST_URL = "https://easylist-downloads.adblockplus.org/advblock.txt"
 
 MAX_RULES = 140_000
 MAX_BYTES = 7_200_000
+MAX_SCRIPTLETS = 800
+MAX_PROCEDURAL = 500
 
 RESOURCE_TYPES = {
     "script": "script",
@@ -55,6 +61,12 @@ PROTECTED_URLS = [
     "https://www.google.com/",
     "https://fonts.googleapis.com/css?family=Inter",
     "https://www.gstatic.com/images/branding.png",
+    "https://yandex.ru/",
+    "https://ya.ru/",
+    "https://yandex.ru/search/?text=quiet",
+    "https://yandex.ru/maps/213/moscow/",
+    "https://yandex.com/maps/",
+    "https://yastatic.net/s3/home-static/logo.png",
 ]
 
 UNSAFE_SELECTOR = re.compile(
@@ -353,7 +365,17 @@ def is_protected(rule: dict) -> bool:
     pattern = rule["trigger"]["url-filter"]
     if pattern == ".*":
         return True
-    interesting = ("youtube", "googlevideo", "ytimg", "gstatic", "googleapis", "google.com")
+    interesting = (
+        "youtube",
+        "googlevideo",
+        "ytimg",
+        "gstatic",
+        "googleapis",
+        "google.com",
+        "yandex",
+        "yastatic",
+        "ya.ru",
+    )
     if not any(piece in pattern for piece in interesting):
         return False
     try:
@@ -378,7 +400,7 @@ def fit(blocks: list[dict], cosmetics: list[dict], exceptions: list[dict]) -> li
     room = MAX_RULES - len(base)
     def cosmetic_rank(rule: dict) -> tuple:
         selector = rule["action"].get("selector", "")
-        hot = ("ytd-", "ytp-ad", "adsbygoogle", "google_ads", "masthead")
+        hot = ("ytd-", "ytp-ad", "adsbygoogle", "google_ads", "masthead", "yandex_rtb", "adfox", "yandex-rtb")
         return (0 if any(piece in selector for piece in hot) else 1, selector)
 
     for rule in sorted(cosmetics, key=cosmetic_rank):
@@ -419,50 +441,303 @@ def self_test() -> None:
     assert compiled.search("https://ad.doubleclick.net/ddm/track")
     assert not compiled.search("https://notdoubleclick.net/")
     assert not compiled.search("https://www.youtube.com/watch?v=abc")
+    yandex = yandex_ad_rules()
+
+    def hits(rules: list[dict], url: str) -> bool:
+        return any(
+            rule["action"]["type"] == "block" and re.search(rule["trigger"]["url-filter"], url, re.IGNORECASE)
+            for rule in rules
+        )
+
+    assert hits(yandex, "https://an.yandex.ru/system/context.js")
+    assert hits(yandex, "https://yandex.ru/ads/system/context.js")
+    assert hits(yandex, "https://yastatic.net/partner-code/context.js")
+    assert not hits(yandex, "https://yandex.ru/")
+    assert not hits(yandex, "https://yandex.ru/maps/213/moscow/")
+    assert not hits(yandex, "https://ya.ru/")
+    assert hits(yandex_privacy_rules(), "https://mc.yandex.ru/watch/123")
+    assert not hits(yandex_privacy_rules(), "https://yandex.ru/")
+    sample = parse_scriptlet("example.com##+js(set-constant, canRunAds, false)")
+    assert sample and sample["name"] == "set-constant"
+    assert parse_scriptlet("##+js(set-constant, canRunAds, false)") is None
+    procedural = parse_procedural('rifme.net#?#div:-abp-has(> [id^="yandex_rtb"])')
+    assert procedural and procedural["kind"] == "css"
 
 
-def build_from(ads_text: str, privacy_text: str) -> tuple[str, str, dict]:
+SUPPORTED_SCRIPTLETS = {
+    "set-constant": "set-constant",
+    "set": "set-constant",
+    "abort-on-property-read": "abort-on-property-read",
+    "abort-on-property-write": "abort-on-property-write",
+    "json-prune": "json-prune",
+    "remove-node-text": "remove-node-text",
+    "rmnt": "remove-node-text",
+    "prevent-fetch": "prevent-fetch",
+    "prevent-xhr": "prevent-xhr",
+    "no-fetch-if": "prevent-fetch",
+    "no-xhr-if": "prevent-xhr",
+}
+FORBIDDEN_PROPERTIES = {
+    "document", "window", "location", "cookie", "length", "prototype",
+    "href", "src", "parentNode", "innerHTML",
+}
+
+
+def host_block(host: str) -> dict:
+    pattern = abp_to_regex(f"||{host}^")
+    if not pattern:
+        raise SystemExit(f"could not compile host rule {host}")
+    return {"trigger": {"url-filter": pattern}, "action": {"type": "block"}}
+
+
+def path_block(host: str, path: str) -> dict:
+    escaped = host.replace(".", r"\.")
+    return {
+        "trigger": {"url-filter": rf"^https?://([^/?#]*\.)?{escaped}{path}"},
+        "action": {"type": "block"},
+    }
+
+
+def cosmetic_rule(selector: str) -> dict:
+    return {"trigger": {"url-filter": ".*"}, "action": {"type": "css-display-none", "selector": selector}}
+
+
+def yandex_ad_rules() -> list[dict]:
+    rules = [host_block(host) for host in (
+        "an.yandex.ru", "yabs.yandex.ru", "adfox.yandex.ru", "ads.adfox.ru", "yandexadexchange.net",
+    )]
+    rules += [
+        path_block("yandex.ru", "/ads/"),
+        path_block("yandex.ru", "/an/"),
+        path_block("yandex.com", "/ads/"),
+        path_block("yastatic.net", "/partner-code"),
+        path_block("yastatic.net", "/pcode/"),
+        path_block("yastatic.net", "/safeframe-bundles/"),
+        cosmetic_rule('div[id^="yandex_rtb"]'),
+        cosmetic_rule('div[class^="yandex_rtb"]'),
+        cosmetic_rule('div[id^="adfox_"]'),
+        cosmetic_rule(".yandex-rtb"),
+        cosmetic_rule(".yandex-rtb-block"),
+        cosmetic_rule('iframe[src*="an.yandex.ru"]'),
+        cosmetic_rule('iframe[src*="yandex.ru/ads"]'),
+        cosmetic_rule('iframe[src*="adfox.yandex"]'),
+    ]
+    return [rule for rule in rules if not is_protected(rule)]
+
+
+def yandex_privacy_rules() -> list[dict]:
+    rules = [host_block(host) for host in ("mc.yandex.ru", "mc.yandex.com", "mc.yandex.by", "mc.yandex.kz")]
+    return [rule for rule in rules if not is_protected(rule)]
+
+
+def split_scriptlet_args(raw: str) -> list[str]:
+    args: list[str] = []
+    current: list[str] = []
+    quote = ""
+    for char in raw.strip():
+        if quote:
+            if char == quote:
+                quote = ""
+            else:
+                current.append(char)
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char == ",":
+            args.append("".join(current).strip())
+            current = []
+            continue
+        current.append(char)
+    tail = "".join(current).strip()
+    if tail:
+        args.append(tail)
+    return [item for item in args if item]
+
+
+def normalize_domains(raw: str) -> list[str]:
+    domains: list[str] = []
+    for part in raw.split(","):
+        text = part.strip().lower()
+        if not text or text.startswith("~") or "*" in text:
+            continue
+        if text.startswith("*."):
+            text = text[2:]
+        if text.startswith("www."):
+            text = text[4:]
+        if text and " " not in text and "/" not in text:
+            domains.append(text)
+    return domains[:8]
+
+
+def extract_engines(texts: list[str]) -> tuple[list[dict], list[dict]]:
+    scriptlets: list[dict] = []
+    procedural: list[dict] = []
+    seen_s: set[str] = set()
+    seen_p: set[str] = set()
+    for text in texts:
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("!") or line.startswith("["):
+                continue
+            if "##+js(" in line or "#%#//scriptlet" in line or "#%#//scriptlet(" in line:
+                rule = parse_scriptlet(line)
+                if not rule:
+                    continue
+                key = json.dumps(rule, ensure_ascii=False, sort_keys=True)
+                if key in seen_s or len(scriptlets) >= MAX_SCRIPTLETS:
+                    continue
+                seen_s.add(key)
+                scriptlets.append(rule)
+                continue
+            if "#?#" not in line:
+                continue
+            rule = parse_procedural(line)
+            if not rule:
+                continue
+            key = json.dumps(rule, ensure_ascii=False, sort_keys=True)
+            if key in seen_p or len(procedural) >= MAX_PROCEDURAL:
+                continue
+            seen_p.add(key)
+            procedural.append(rule)
+    return scriptlets, procedural
+
+
+def parse_scriptlet(line: str) -> dict | None:
+    if "##+js(" in line:
+        domains_raw, _, call = line.partition("##+js(")
+        if not call.endswith(")"):
+            return None
+        parts = split_scriptlet_args(call[:-1])
+    else:
+        domains_raw, _, call = line.partition("#%#")
+        call = call.strip()
+        if not call.startswith("//scriptlet"):
+            return None
+        open_paren = call.find("(")
+        close_paren = call.rfind(")")
+        if open_paren < 0 or close_paren < 0:
+            return None
+        parts = split_scriptlet_args(call[open_paren + 1 : close_paren])
+    if not parts:
+        return None
+    name = SUPPORTED_SCRIPTLETS.get(parts[0].strip().strip("'\""))
+    if not name:
+        return None
+    domains = normalize_domains(domains_raw)
+    if not domains:
+        return None
+    args = [part.strip().strip("'\"") for part in parts[1:]]
+    if name in {"abort-on-property-read", "abort-on-property-write", "set-constant"}:
+        prop = args[0].split(".")[-1] if args else ""
+        if not prop or prop in FORBIDDEN_PROPERTIES or len(prop) < 4:
+            return None
+    if name == "json-prune":
+        keys = [key for key in " ".join(args).replace(",", " ").split() if len(key) >= 4]
+        if not keys:
+            return None
+        args = keys[:12]
+    if name == "remove-node-text":
+        needle = args[-1] if args else ""
+        if len(needle) < 6 or len(needle) > 80:
+            return None
+    if name in {"prevent-fetch", "prevent-xhr"}:
+        token = args[0] if args else ""
+        if len(token) < 8:
+            return None
+    return {"domains": domains, "name": name, "args": args[:6]}
+
+
+def parse_procedural(line: str) -> dict | None:
+    domains_raw, _, selector = line.partition("#?#")
+    selector = selector.strip()
+    if not selector or len(selector) > 280:
+        return None
+    if selector in {"*", "body", "html", "div", "span", "a"} or selector.startswith("body"):
+        return None
+    domains = normalize_domains(domains_raw)
+    lowered = selector.lower()
+    global_ok = any(token in lowered for token in ("yandex_rtb", "adfox", "adsbygoogle", "taboola", "outbrain"))
+    if not domains and not global_ok:
+        return None
+    kind = "css"
+    if ":has-text" in lowered or ":-abp-contains" in lowered:
+        kind = "text"
+    elif ":upward" in lowered:
+        kind = "upward"
+    elif ":-abp-has" in lowered or ":has(" in lowered:
+        kind = "css"
+    else:
+        return None
+    if kind == "text":
+        match = re.search(r":(?:-abp-)?(?:has-text|contains)\(([^)]+)\)", selector, re.I)
+        if not match or len(match.group(1).strip("'\"")) < 6:
+            return None
+    return {"domains": domains, "selector": selector, "kind": kind}
+
+
+def engine_rules_js(scriptlets: list[dict], procedural: list[dict]) -> str:
+    payload = json.dumps({"scriptlets": scriptlets, "procedural": procedural}, ensure_ascii=False, separators=(",", ":"))
+    return "globalThis.QUIETSAFARI_ENGINE_RULES = " + payload + ";\n"
+
+
+def build_from(ads_text: str, privacy_text: str, russian_text: str) -> tuple[str, str, str, str, dict]:
     ads = fit(*convert_text(ads_text))
-    privacy = fit(*convert_text(privacy_text))
+    privacy = fit(*convert_text(privacy_text)) + yandex_privacy_rules()
+    russian = fit(*convert_text(russian_text)) + yandex_ad_rules()
+    scriptlets, procedural = extract_engines([ads_text, privacy_text, russian_text])
     ads_json = dumps(ads)
     privacy_json = dumps(privacy)
+    russian_json = dumps(russian)
     summary = {
         "ads": len(ads),
         "ads_bytes": len(ads_json.encode("utf-8")),
         "privacy": len(privacy),
         "privacy_bytes": len(privacy_json.encode("utf-8")),
+        "russian": len(russian),
+        "russian_bytes": len(russian_json.encode("utf-8")),
+        "scriptlets": len(scriptlets),
+        "procedural": len(procedural),
     }
-    return ads_json, privacy_json, summary
+    return ads_json, privacy_json, russian_json, engine_rules_js(scriptlets, procedural), summary
 
 
 def main() -> None:
     self_test()
     ads_text = download(EASYLIST_URL, "easylist.txt")
     privacy_text = download(EASYPRIVACY_URL, "easyprivacy.txt")
-    ads_json, privacy_json, summary = build_from(ads_text, privacy_text)
+    russian_text = download(RU_ADLIST_URL, "advblock.txt")
+    ads_json, privacy_json, russian_json, engine_js, summary = build_from(ads_text, privacy_text, russian_text)
     if "--check" in sys.argv:
-        current_ads = ADS_OUT.read_text(encoding="utf-8") if ADS_OUT.exists() else ""
-        current_privacy = PRIVACY_OUT.read_text(encoding="utf-8") if PRIVACY_OUT.exists() else ""
-        if current_ads != ads_json or current_privacy != privacy_json:
-            raise SystemExit(
-                "shipped filter JSON is stale "
-                f"(ads {summary['ads']} rules / {summary['ads_bytes']} bytes, "
-                f"privacy {summary['privacy']} rules / {summary['privacy_bytes']} bytes). "
-                "Run scripts/convert_filters.py"
-            )
+        current = {
+            ADS_OUT: ads_json,
+            PRIVACY_OUT: privacy_json,
+            RUSSIAN_OUT: russian_json,
+            ENGINE_RULES_OUT: engine_js,
+        }
+        stale = [path.name for path, text in current.items() if not path.exists() or path.read_text(encoding="utf-8") != text]
+        if stale:
+            raise SystemExit("shipped filters are stale: " + ", ".join(stale) + f" {summary}")
         print("shipped filters match", summary)
         return
     ADS_OUT.write_text(ads_json, encoding="utf-8")
     PRIVACY_OUT.write_text(privacy_json, encoding="utf-8")
+    RUSSIAN_OUT.write_text(russian_json, encoding="utf-8")
+    ENGINE_RULES_OUT.write_text(engine_js, encoding="utf-8")
     counts = {
-        "version": 2,
+        "version": 3,
         "adCount": summary["ads"],
         "privacyCount": summary["privacy"],
+        "russianCount": summary["russian"],
+        "scriptlets": summary["scriptlets"],
+        "procedural": summary["procedural"],
     }
     (ROOT / "Shared" / "filter-counts.json").write_text(json.dumps(counts, indent=2) + "\n", encoding="utf-8")
     print(
-        f"ads {summary['ads']} rules, {summary['ads_bytes']} bytes; "
-        f"privacy {summary['privacy']} rules, {summary['privacy_bytes']} bytes"
+        f"ads {summary['ads']} ({summary['ads_bytes']} B), "
+        f"privacy {summary['privacy']} ({summary['privacy_bytes']} B), "
+        f"russian {summary['russian']} ({summary['russian_bytes']} B), "
+        f"scriptlets {summary['scriptlets']}, procedural {summary['procedural']}"
     )
 
 

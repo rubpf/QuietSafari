@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "QuietSafari",
   "description": "Прячет рекламу на страницах и помогает пропускать ролики на YouTube. Сетевые правила живут в QuietSafari Content Blocker.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "icons": {
     "16": "images/icon-16.png",
     "32": "images/icon-32.png",
@@ -23,6 +23,18 @@
     "service_worker": "background.js"
   },
   "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["engine-rules.js", "engine.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["cookies.js"],
+      "run_at": "document_idle"
+    },
     {
       "matches": ["*://*.youtube.com/*", "*://youtube.com/*", "*://*.youtube-nocookie.com/*"],
       "js": ["youtube-main.js"],

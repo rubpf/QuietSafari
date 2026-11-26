@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Settings window. Visible strings are Russian because the owner runs the app himself.
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var store = SettingsStore()
     @State private var draft = ""
     @State private var draftMessage = ""
@@ -22,6 +23,11 @@ struct ContentView: View {
         }
         .frame(minWidth: 560, minHeight: 680)
         .onAppear { store.start() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                store.refreshNow()
+            }
+        }
     }
 
     private var header: some View {
@@ -112,13 +118,18 @@ struct ContentView: View {
                 store.reapplyRules()
             }
             .disabled(store.isBusy)
+            Toggle("Скрывать окна про cookie", isOn: Binding(
+                get: { store.blockCookieNotices },
+                set: { store.setBlockCookieNotices($0) }
+            ))
+            .disabled(store.isBusy)
             Text(store.versionText)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         } header: {
             Text("Фильтры")
         } footer: {
-            Text("Кнопка скачивает EasyList и EasyPrivacy и переводит их в правила Safari. Пока скачивания не было, работают списки, встроенные в приложение.")
+            Text("Кнопка скачивает EasyList, EasyPrivacy и RU AdList и переводит их в правила Safari. Окна про cookie выключены, пока вы сами не включите переключатель.")
         }
     }
 
@@ -147,6 +158,7 @@ struct ContentView: View {
         Section {
             labeledState("QuietSafari Content Blocker", enabled: store.contentBlockerEnabled)
             labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled)
+            labeledState("QuietSafari Russian", enabled: store.russianBlockerEnabled)
             labeledState("QuietSafari", enabled: store.webExtensionEnabled)
             LabeledContent("Общая папка") {
                 Text(store.appGroupAvailable ? "доступна" : "недоступна")
@@ -216,8 +228,8 @@ struct ContentView: View {
         """
         1. Safari → Настройки → Дополнительно → включите «Показывать функции для веб-разработчиков».
         2. Меню «Разработка» → «Разрешить неподписанные расширения». Safari забывает этот пункт, когда его полностью закрывают.
-        3. Safari → Настройки → Дополнения. Включите три пункта: QuietSafari, QuietSafari Content Blocker и QuietSafari Privacy.
-        4. У QuietSafari разрешите доступ ко всем сайтам. Content Blocker — реклама EasyList, Privacy — трекеры EasyPrivacy, QuietSafari — YouTube и счётчик.
+        3. Safari → Настройки → Дополнения. Включите четыре пункта: QuietSafari, QuietSafari Content Blocker, QuietSafari Privacy и QuietSafari Russian.
+        4. У QuietSafari разрешите доступ ко всем сайтам. Content Blocker — EasyList, Privacy — EasyPrivacy, Russian — RU AdList и реклама Яндекса, QuietSafari — YouTube, скрипты списков и счётчик.
         """
     }
 }

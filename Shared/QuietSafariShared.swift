@@ -11,7 +11,8 @@ enum QuietSafariShared {
     static let statsFileName = "stats.json"
     static let rulesFileName = "blockerList.json"
     static let privacyRulesFileName = "privacyList.json"
-    static let bundledFilterVersion = 2
+    static let russianRulesFileName = "russianList.json"
+    static let bundledFilterVersion = 3
 
     static let log = Logger(subsystem: "com.quietsafari.macos", category: "shared")
 
@@ -132,8 +133,22 @@ enum QuietSafariShared {
 struct QuietSafariSettings: Codable, Equatable {
     var blockingEnabled: Bool
     var allowlist: [String]
+    var blockCookieNotices: Bool
 
-    static let `default` = QuietSafariSettings(blockingEnabled: true, allowlist: [])
+    static let `default` = QuietSafariSettings(blockingEnabled: true, allowlist: [], blockCookieNotices: false)
+
+    init(blockingEnabled: Bool, allowlist: [String], blockCookieNotices: Bool = false) {
+        self.blockingEnabled = blockingEnabled
+        self.allowlist = allowlist
+        self.blockCookieNotices = blockCookieNotices
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        blockingEnabled = try container.decodeIfPresent(Bool.self, forKey: .blockingEnabled) ?? true
+        allowlist = try container.decodeIfPresent([String].self, forKey: .allowlist) ?? []
+        blockCookieNotices = try container.decodeIfPresent(Bool.self, forKey: .blockCookieNotices) ?? false
+    }
 }
 
 struct QuietSafariStats: Codable, Equatable {
@@ -164,6 +179,7 @@ enum QuietSafariBridge {
             "appGroup": QuietSafariShared.containerURL != nil,
             "blockingEnabled": settings.blockingEnabled,
             "allowlist": settings.allowlist,
+            "blockCookieNotices": settings.blockCookieNotices,
             "blockedCount": stats.blockedCount,
         ]
     }

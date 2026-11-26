@@ -1,5 +1,8 @@
 {
-  "version": 2,
-  "adCount": 59922,
-  "privacyCount": 56427
+  "version": 3,
+  "adCount": 59923,
+  "privacyCount": 56431,
+  "russianCount": 24149,
+  "scriptlets": 11,
+  "procedural": 500
 }

@@ -8,6 +8,7 @@ function readLocal() {
     blockingEnabled: true,
     allowlist: [],
     blockedCount: 0,
+    blockCookieNotices: false,
   });
 }
 
@@ -23,6 +24,7 @@ async function syncFromApp() {
     const next = {
       blockingEnabled: response.blockingEnabled !== false,
       allowlist: Array.isArray(response.allowlist) ? response.allowlist : [],
+      blockCookieNotices: response.blockCookieNotices === true,
       blockedCount: Math.max(localCount, remoteCount),
     };
     await ext.storage.local.set(next);

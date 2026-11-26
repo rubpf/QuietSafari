@@ -7,69 +7,73 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10000000000000000000036 /* QuietSafariApp.swift */ = {
+		A1000000000000000000003D /* QuietSafariApp.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000001 /* QuietSafariApp.swift */;
 		};
-		A10000000000000000000037 /* ContentView.swift */ = {
+		A1000000000000000000003E /* ContentView.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000002 /* ContentView.swift */;
 		};
-		A10000000000000000000038 /* SettingsStore.swift */ = {
+		A1000000000000000000003F /* SettingsStore.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000003 /* SettingsStore.swift */;
 		};
-		A10000000000000000000039 /* RuleCompiler.swift */ = {
+		A10000000000000000000040 /* RuleCompiler.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000004 /* RuleCompiler.swift */;
 		};
-		A1000000000000000000003A /* TestPageServer.swift */ = {
+		A10000000000000000000041 /* TestPageServer.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000005 /* TestPageServer.swift */;
 		};
-		A1000000000000000000003B /* FilterConverter.swift */ = {
+		A10000000000000000000042 /* FilterConverter.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000006 /* FilterConverter.swift */;
 		};
-		A1000000000000000000003C /* FilterLibrary.swift */ = {
+		A10000000000000000000043 /* FilterLibrary.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A10000000000000000000007 /* FilterLibrary.swift */;
 		};
-		A1000000000000000000003D /* QuietSafariShared.swift */ = {
+		A10000000000000000000044 /* QuietSafariShared.swift */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001C /* QuietSafariShared.swift */;
+			fileRef = A10000000000000000000020 /* QuietSafariShared.swift */;
 		};
-		A1000000000000000000003F /* Assets.xcassets */ = {
+		A10000000000000000000046 /* Assets.xcassets */ = {
 			isa = "PBXBuildFile";
 			fileRef = A1000000000000000000000B /* Assets.xcassets */;
 		};
-		A10000000000000000000040 /* TestPage.html */ = {
+		A10000000000000000000047 /* TestPage.html */ = {
 			isa = "PBXBuildFile";
 			fileRef = A1000000000000000000000A /* TestPage.html */;
 		};
-		A10000000000000000000041 /* blockerList.json */ = {
+		A10000000000000000000048 /* blockerList.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001D /* blockerList.json */;
+			fileRef = A10000000000000000000021 /* blockerList.json */;
 		};
-		A10000000000000000000042 /* privacyList.json */ = {
+		A10000000000000000000049 /* privacyList.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001E /* privacyList.json */;
+			fileRef = A10000000000000000000022 /* privacyList.json */;
 		};
-		A10000000000000000000043 /* filter-counts.json */ = {
+		A1000000000000000000004A /* russianList.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001F /* filter-counts.json */;
+			fileRef = A10000000000000000000023 /* russianList.json */;
 		};
-		A10000000000000000000045 /* SafariServices.framework */ = {
+		A1000000000000000000004B /* filter-counts.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000025 /* SafariServices.framework */;
+			fileRef = A10000000000000000000024 /* filter-counts.json */;
 		};
-		A10000000000000000000046 /* Network.framework */ = {
+		A1000000000000000000004D /* SafariServices.framework */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000026 /* Network.framework */;
+			fileRef = A1000000000000000000002A /* SafariServices.framework */;
 		};
-		A10000000000000000000048 /* QuietSafariExtension.appex */ = {
+		A1000000000000000000004E /* Network.framework */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000028 /* QuietSafariExtension.appex */;
+			fileRef = A1000000000000000000002B /* Network.framework */;
+		};
+		A10000000000000000000050 /* QuietSafariExtension.appex */ = {
+			isa = "PBXBuildFile";
+			fileRef = A1000000000000000000002D /* QuietSafariExtension.appex */;
 			settings = {
 				ATTRIBUTES = (
 					CodeSignOnCopy,
@@ -77,9 +81,9 @@
 				);
 			};
 		};
-		A10000000000000000000049 /* QuietSafariContentBlocker.appex */ = {
+		A10000000000000000000051 /* QuietSafariContentBlocker.appex */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000029 /* QuietSafariContentBlocker.appex */;
+			fileRef = A1000000000000000000002E /* QuietSafariContentBlocker.appex */;
 			settings = {
 				ATTRIBUTES = (
 					CodeSignOnCopy,
@@ -87,9 +91,9 @@
 				);
 			};
 		};
-		A1000000000000000000004A /* QuietSafariPrivacy.appex */ = {
+		A10000000000000000000052 /* QuietSafariPrivacy.appex */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000002A /* QuietSafariPrivacy.appex */;
+			fileRef = A1000000000000000000002F /* QuietSafariPrivacy.appex */;
 			settings = {
 				ATTRIBUTES = (
 					CodeSignOnCopy,
@@ -97,112 +101,154 @@
 				);
 			};
 		};
-		A1000000000000000000004C /* SafariWebExtensionHandler.swift */ = {
+		A10000000000000000000053 /* QuietSafariRussian.appex */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000010 /* SafariWebExtensionHandler.swift */;
+			fileRef = A10000000000000000000030 /* QuietSafariRussian.appex */;
+			settings = {
+				ATTRIBUTES = (
+					CodeSignOnCopy,
+					RemoveHeadersOnCopy,
+				);
+			};
 		};
-		A1000000000000000000004D /* QuietSafariShared.swift */ = {
+		A10000000000000000000055 /* SafariWebExtensionHandler.swift */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001C /* QuietSafariShared.swift */;
+			fileRef = A10000000000000000000011 /* SafariWebExtensionHandler.swift */;
 		};
-		A1000000000000000000004F /* manifest.json */ = {
+		A10000000000000000000056 /* QuietSafariShared.swift */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000013 /* manifest.json */;
+			fileRef = A10000000000000000000020 /* QuietSafariShared.swift */;
 		};
-		A10000000000000000000050 /* background.js */ = {
+		A10000000000000000000058 /* manifest.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000014 /* background.js */;
+			fileRef = A10000000000000000000014 /* manifest.json */;
 		};
-		A10000000000000000000051 /* cosmetic.js */ = {
+		A10000000000000000000059 /* background.js */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000015 /* cosmetic.js */;
+			fileRef = A10000000000000000000015 /* background.js */;
 		};
-		A10000000000000000000052 /* youtube.js */ = {
+		A1000000000000000000005A /* cosmetic.js */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000016 /* youtube.js */;
+			fileRef = A10000000000000000000016 /* cosmetic.js */;
 		};
-		A10000000000000000000053 /* popup.html */ = {
+		A1000000000000000000005B /* youtube.js */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000017 /* popup.html */;
+			fileRef = A10000000000000000000017 /* youtube.js */;
 		};
-		A10000000000000000000054 /* popup.css */ = {
+		A1000000000000000000005C /* popup.html */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000018 /* popup.css */;
+			fileRef = A10000000000000000000018 /* popup.html */;
 		};
-		A10000000000000000000055 /* popup.js */ = {
+		A1000000000000000000005D /* popup.css */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000019 /* popup.js */;
+			fileRef = A10000000000000000000019 /* popup.css */;
 		};
-		A10000000000000000000056 /* youtube-main.js */ = {
+		A1000000000000000000005E /* popup.js */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001A /* youtube-main.js */;
+			fileRef = A1000000000000000000001A /* popup.js */;
 		};
-		A10000000000000000000057 /* images */ = {
+		A1000000000000000000005F /* youtube-main.js */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001B /* images */;
+			fileRef = A1000000000000000000001B /* youtube-main.js */;
 		};
-		A10000000000000000000059 /* SafariServices.framework */ = {
+		A10000000000000000000060 /* engine.js */ = {
 			isa = "PBXBuildFile";
-			fileRef = A10000000000000000000025 /* SafariServices.framework */;
+			fileRef = A1000000000000000000001C /* engine.js */;
 		};
-		A1000000000000000000005B /* ContentBlockerRequestHandler.swift */ = {
+		A10000000000000000000061 /* engine-rules.js */ = {
+			isa = "PBXBuildFile";
+			fileRef = A1000000000000000000001D /* engine-rules.js */;
+		};
+		A10000000000000000000062 /* cookies.js */ = {
+			isa = "PBXBuildFile";
+			fileRef = A1000000000000000000001E /* cookies.js */;
+		};
+		A10000000000000000000063 /* images */ = {
+			isa = "PBXBuildFile";
+			fileRef = A1000000000000000000001F /* images */;
+		};
+		A10000000000000000000065 /* SafariServices.framework */ = {
+			isa = "PBXBuildFile";
+			fileRef = A1000000000000000000002A /* SafariServices.framework */;
+		};
+		A10000000000000000000067 /* ContentBlockerRequestHandler.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A1000000000000000000000C /* ContentBlockerRequestHandler.swift */;
 		};
-		A1000000000000000000005C /* QuietSafariShared.swift */ = {
+		A10000000000000000000068 /* QuietSafariShared.swift */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001C /* QuietSafariShared.swift */;
+			fileRef = A10000000000000000000020 /* QuietSafariShared.swift */;
 		};
-		A1000000000000000000005E /* blockerList.json */ = {
+		A1000000000000000000006A /* blockerList.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001D /* blockerList.json */;
+			fileRef = A10000000000000000000021 /* blockerList.json */;
 		};
-		A10000000000000000000061 /* ContentBlockerRequestHandler.swift */ = {
+		A1000000000000000000006D /* ContentBlockerRequestHandler.swift */ = {
 			isa = "PBXBuildFile";
 			fileRef = A1000000000000000000000C /* ContentBlockerRequestHandler.swift */;
 		};
-		A10000000000000000000062 /* QuietSafariShared.swift */ = {
+		A1000000000000000000006E /* QuietSafariShared.swift */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001C /* QuietSafariShared.swift */;
+			fileRef = A10000000000000000000020 /* QuietSafariShared.swift */;
 		};
-		A10000000000000000000064 /* privacyList.json */ = {
+		A10000000000000000000070 /* privacyList.json */ = {
 			isa = "PBXBuildFile";
-			fileRef = A1000000000000000000001E /* privacyList.json */;
+			fileRef = A10000000000000000000022 /* privacyList.json */;
+		};
+		A10000000000000000000073 /* ContentBlockerRequestHandler.swift */ = {
+			isa = "PBXBuildFile";
+			fileRef = A1000000000000000000000C /* ContentBlockerRequestHandler.swift */;
+		};
+		A10000000000000000000074 /* QuietSafariShared.swift */ = {
+			isa = "PBXBuildFile";
+			fileRef = A10000000000000000000020 /* QuietSafariShared.swift */;
+		};
+		A10000000000000000000076 /* russianList.json */ = {
+			isa = "PBXBuildFile";
+			fileRef = A10000000000000000000023 /* russianList.json */;
 		};
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		A1000000000000000000007A /* PBXContainerItemProxy */ = {
+		A10000000000000000000090 /* PBXContainerItemProxy */ = {
 			isa = "PBXContainerItemProxy";
-			containerPortal = A10000000000000000000076 /* Project object */;
+			containerPortal = A1000000000000000000008B /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A10000000000000000000077;
+			remoteGlobalIDString = A1000000000000000000008C;
 			remoteInfo = "QuietSafariExtension";
 		};
-		A1000000000000000000007C /* PBXContainerItemProxy */ = {
+		A10000000000000000000092 /* PBXContainerItemProxy */ = {
 			isa = "PBXContainerItemProxy";
-			containerPortal = A10000000000000000000076 /* Project object */;
+			containerPortal = A1000000000000000000008B /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A10000000000000000000078;
+			remoteGlobalIDString = A1000000000000000000008D;
 			remoteInfo = "QuietSafariContentBlocker";
 		};
-		A1000000000000000000007E /* PBXContainerItemProxy */ = {
+		A10000000000000000000094 /* PBXContainerItemProxy */ = {
 			isa = "PBXContainerItemProxy";
-			containerPortal = A10000000000000000000076 /* Project object */;
+			containerPortal = A1000000000000000000008B /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A10000000000000000000079;
+			remoteGlobalIDString = A1000000000000000000008F;
 			remoteInfo = "QuietSafariPrivacy";
+		};
+		A10000000000000000000096 /* PBXContainerItemProxy */ = {
+			isa = "PBXContainerItemProxy";
+			containerPortal = A1000000000000000000008B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1000000000000000000008E;
+			remoteInfo = "QuietSafariRussian";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		A1000000000000000000004B /* Embed Foundation Extensions */ = {
+		A10000000000000000000054 /* Embed Foundation Extensions */ = {
 			isa = "PBXCopyFilesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000048 /* QuietSafariExtension.appex */,
-				A10000000000000000000049 /* QuietSafariContentBlocker.appex */,
-				A1000000000000000000004A /* QuietSafariPrivacy.appex */,
+				A10000000000000000000050 /* QuietSafariExtension.appex */,
+				A10000000000000000000051 /* QuietSafariContentBlocker.appex */,
+				A10000000000000000000052 /* QuietSafariPrivacy.appex */,
+				A10000000000000000000053 /* QuietSafariRussian.appex */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -302,205 +348,250 @@
 			path = "Info.plist";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000010 /* SafariWebExtensionHandler.swift */ = {
-			isa = "PBXFileReference";
-			lastKnownFileType = "sourcecode.swift";
-			path = "SafariWebExtensionHandler.swift";
-			sourceTree = "<group>";
-		};
-		A10000000000000000000011 /* Info.plist */ = {
+		A10000000000000000000010 /* Info.plist */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.plist.xml";
 			path = "Info.plist";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000012 /* QuietSafariExtension.entitlements */ = {
+		A10000000000000000000011 /* SafariWebExtensionHandler.swift */ = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			path = "SafariWebExtensionHandler.swift";
+			sourceTree = "<group>";
+		};
+		A10000000000000000000012 /* Info.plist */ = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text.plist.xml";
+			path = "Info.plist";
+			sourceTree = "<group>";
+		};
+		A10000000000000000000013 /* QuietSafariExtension.entitlements */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.plist.entitlements";
 			path = "QuietSafariExtension.entitlements";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000013 /* manifest.json */ = {
+		A10000000000000000000014 /* manifest.json */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.json";
 			path = "manifest.json";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000014 /* background.js */ = {
+		A10000000000000000000015 /* background.js */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "sourcecode.javascript";
 			path = "background.js";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000015 /* cosmetic.js */ = {
+		A10000000000000000000016 /* cosmetic.js */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "sourcecode.javascript";
 			path = "cosmetic.js";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000016 /* youtube.js */ = {
+		A10000000000000000000017 /* youtube.js */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "sourcecode.javascript";
 			path = "youtube.js";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000017 /* popup.html */ = {
+		A10000000000000000000018 /* popup.html */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.html";
 			path = "popup.html";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000018 /* popup.css */ = {
+		A10000000000000000000019 /* popup.css */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.css";
 			path = "popup.css";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000019 /* popup.js */ = {
+		A1000000000000000000001A /* popup.js */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "sourcecode.javascript";
 			path = "popup.js";
 			sourceTree = "<group>";
 		};
-		A1000000000000000000001A /* youtube-main.js */ = {
+		A1000000000000000000001B /* youtube-main.js */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "sourcecode.javascript";
 			path = "youtube-main.js";
 			sourceTree = "<group>";
 		};
-		A1000000000000000000001B /* images */ = {
+		A1000000000000000000001C /* engine.js */ = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.javascript";
+			path = "engine.js";
+			sourceTree = "<group>";
+		};
+		A1000000000000000000001D /* engine-rules.js */ = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.javascript";
+			path = "engine-rules.js";
+			sourceTree = "<group>";
+		};
+		A1000000000000000000001E /* cookies.js */ = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.javascript";
+			path = "cookies.js";
+			sourceTree = "<group>";
+		};
+		A1000000000000000000001F /* images */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "folder";
 			path = "images";
 			sourceTree = "<group>";
 		};
-		A1000000000000000000001C /* QuietSafariShared.swift */ = {
+		A10000000000000000000020 /* QuietSafariShared.swift */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "sourcecode.swift";
 			path = "QuietSafariShared.swift";
 			sourceTree = "<group>";
 		};
-		A1000000000000000000001D /* blockerList.json */ = {
+		A10000000000000000000021 /* blockerList.json */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.json";
 			path = "blockerList.json";
 			sourceTree = "<group>";
 		};
-		A1000000000000000000001E /* privacyList.json */ = {
+		A10000000000000000000022 /* privacyList.json */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.json";
 			path = "privacyList.json";
 			sourceTree = "<group>";
 		};
-		A1000000000000000000001F /* filter-counts.json */ = {
+		A10000000000000000000023 /* russianList.json */ = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text.json";
+			path = "russianList.json";
+			sourceTree = "<group>";
+		};
+		A10000000000000000000024 /* filter-counts.json */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.json";
 			path = "filter-counts.json";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000020 /* Shared.xcconfig */ = {
+		A10000000000000000000025 /* Shared.xcconfig */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text.xcconfig";
 			path = "Shared.xcconfig";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000021 /* Local.xcconfig.example */ = {
+		A10000000000000000000026 /* Local.xcconfig.example */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "text";
 			path = "Local.xcconfig.example";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000022 /* ARCHITECTURE.md */ = {
+		A10000000000000000000027 /* ARCHITECTURE.md */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "net.daringfireball.markdown";
 			path = "ARCHITECTURE.md";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000023 /* ROADMAP.md */ = {
+		A10000000000000000000028 /* ROADMAP.md */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "net.daringfireball.markdown";
 			path = "ROADMAP.md";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000024 /* README.md */ = {
+		A10000000000000000000029 /* README.md */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "net.daringfireball.markdown";
 			path = "README.md";
 			sourceTree = "<group>";
 		};
-		A10000000000000000000025 /* SafariServices.framework */ = {
+		A1000000000000000000002A /* SafariServices.framework */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "wrapper.framework";
 			name = "SafariServices.framework";
 			path = "System/Library/Frameworks/SafariServices.framework";
 			sourceTree = "SDKROOT";
 		};
-		A10000000000000000000026 /* Network.framework */ = {
+		A1000000000000000000002B /* Network.framework */ = {
 			isa = "PBXFileReference";
 			lastKnownFileType = "wrapper.framework";
 			name = "Network.framework";
 			path = "System/Library/Frameworks/Network.framework";
 			sourceTree = "SDKROOT";
 		};
-		A10000000000000000000027 /* QuietSafari.app */ = {
+		A1000000000000000000002C /* QuietSafari.app */ = {
 			isa = "PBXFileReference";
 			explicitFileType = "wrapper.application";
 			includeInIndex = 0;
 			path = "QuietSafari.app";
 			sourceTree = "BUILT_PRODUCTS_DIR";
 		};
-		A10000000000000000000028 /* QuietSafariExtension.appex */ = {
+		A1000000000000000000002D /* QuietSafariExtension.appex */ = {
 			isa = "PBXFileReference";
 			explicitFileType = "wrapper.app-extension";
 			includeInIndex = 0;
 			path = "QuietSafariExtension.appex";
 			sourceTree = "BUILT_PRODUCTS_DIR";
 		};
-		A10000000000000000000029 /* QuietSafariContentBlocker.appex */ = {
+		A1000000000000000000002E /* QuietSafariContentBlocker.appex */ = {
 			isa = "PBXFileReference";
 			explicitFileType = "wrapper.app-extension";
 			includeInIndex = 0;
 			path = "QuietSafariContentBlocker.appex";
 			sourceTree = "BUILT_PRODUCTS_DIR";
 		};
-		A1000000000000000000002A /* QuietSafariPrivacy.appex */ = {
+		A1000000000000000000002F /* QuietSafariPrivacy.appex */ = {
 			isa = "PBXFileReference";
 			explicitFileType = "wrapper.app-extension";
 			includeInIndex = 0;
 			path = "QuietSafariPrivacy.appex";
 			sourceTree = "BUILT_PRODUCTS_DIR";
 		};
+		A10000000000000000000030 /* QuietSafariRussian.appex */ = {
+			isa = "PBXFileReference";
+			explicitFileType = "wrapper.app-extension";
+			includeInIndex = 0;
+			path = "QuietSafariRussian.appex";
+			sourceTree = "BUILT_PRODUCTS_DIR";
+		};
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		A10000000000000000000047 /* Frameworks */ = {
+		A1000000000000000000004F /* Frameworks */ = {
 			isa = "PBXFrameworksBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000045 /* SafariServices.framework */,
-				A10000000000000000000046 /* Network.framework */,
-			);
-			name = "Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A1000000000000000000005A /* Frameworks */ = {
-			isa = "PBXFrameworksBuildPhase";
-			buildActionMask = 2147483647;
-			files = (
-				A10000000000000000000059 /* SafariServices.framework */,
-			);
-			name = "Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A10000000000000000000060 /* Frameworks */ = {
-			isa = "PBXFrameworksBuildPhase";
-			buildActionMask = 2147483647;
-			files = (
+				A1000000000000000000004D /* SafariServices.framework */,
+				A1000000000000000000004E /* Network.framework */,
 			);
 			name = "Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A10000000000000000000066 /* Frameworks */ = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000065 /* SafariServices.framework */,
+			);
+			name = "Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000000000000000000006C /* Frameworks */ = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000072 /* Frameworks */ = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000078 /* Frameworks */ = {
 			isa = "PBXFrameworksBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
@@ -511,23 +602,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A1000000000000000000002B /* Resources */ = {
+		A10000000000000000000031 /* Resources */ = {
 			isa = "PBXGroup";
 			children = (
-				A10000000000000000000013 /* manifest.json */,
-				A10000000000000000000014 /* background.js */,
-				A10000000000000000000015 /* cosmetic.js */,
-				A10000000000000000000016 /* youtube.js */,
-				A10000000000000000000017 /* popup.html */,
-				A10000000000000000000018 /* popup.css */,
-				A10000000000000000000019 /* popup.js */,
-				A1000000000000000000001A /* youtube-main.js */,
-				A1000000000000000000001B /* images */,
+				A10000000000000000000014 /* manifest.json */,
+				A10000000000000000000015 /* background.js */,
+				A10000000000000000000016 /* cosmetic.js */,
+				A10000000000000000000017 /* youtube.js */,
+				A10000000000000000000018 /* popup.html */,
+				A10000000000000000000019 /* popup.css */,
+				A1000000000000000000001A /* popup.js */,
+				A1000000000000000000001B /* youtube-main.js */,
+				A1000000000000000000001C /* engine.js */,
+				A1000000000000000000001D /* engine-rules.js */,
+				A1000000000000000000001E /* cookies.js */,
+				A1000000000000000000001F /* images */,
 			);
 			sourceTree = "<group>";
 			path = "Resources";
 		};
-		A1000000000000000000002C /* App */ = {
+		A10000000000000000000032 /* App */ = {
 			isa = "PBXGroup";
 			children = (
 				A10000000000000000000001 /* QuietSafariApp.swift */,
@@ -545,18 +639,18 @@
 			sourceTree = "<group>";
 			path = "App";
 		};
-		A1000000000000000000002D /* Extension */ = {
+		A10000000000000000000033 /* Extension */ = {
 			isa = "PBXGroup";
 			children = (
-				A10000000000000000000010 /* SafariWebExtensionHandler.swift */,
-				A1000000000000000000002B /* Resources */,
-				A10000000000000000000011 /* Info.plist */,
-				A10000000000000000000012 /* QuietSafariExtension.entitlements */,
+				A10000000000000000000011 /* SafariWebExtensionHandler.swift */,
+				A10000000000000000000031 /* Resources */,
+				A10000000000000000000012 /* Info.plist */,
+				A10000000000000000000013 /* QuietSafariExtension.entitlements */,
 			);
 			sourceTree = "<group>";
 			path = "Extension";
 		};
-		A1000000000000000000002E /* ContentBlocker */ = {
+		A10000000000000000000034 /* ContentBlocker */ = {
 			isa = "PBXGroup";
 			children = (
 				A1000000000000000000000C /* ContentBlockerRequestHandler.swift */,
@@ -566,7 +660,7 @@
 			sourceTree = "<group>";
 			path = "ContentBlocker";
 		};
-		A1000000000000000000002F /* Privacy */ = {
+		A10000000000000000000035 /* Privacy */ = {
 			isa = "PBXGroup";
 			children = (
 				A1000000000000000000000F /* Info.plist */,
@@ -574,81 +668,92 @@
 			sourceTree = "<group>";
 			path = "Privacy";
 		};
-		A10000000000000000000030 /* Shared */ = {
+		A10000000000000000000036 /* Russian */ = {
 			isa = "PBXGroup";
 			children = (
-				A1000000000000000000001C /* QuietSafariShared.swift */,
-				A1000000000000000000001D /* blockerList.json */,
-				A1000000000000000000001E /* privacyList.json */,
-				A1000000000000000000001F /* filter-counts.json */,
+				A10000000000000000000010 /* Info.plist */,
+			);
+			sourceTree = "<group>";
+			path = "Russian";
+		};
+		A10000000000000000000037 /* Shared */ = {
+			isa = "PBXGroup";
+			children = (
+				A10000000000000000000020 /* QuietSafariShared.swift */,
+				A10000000000000000000021 /* blockerList.json */,
+				A10000000000000000000022 /* privacyList.json */,
+				A10000000000000000000023 /* russianList.json */,
+				A10000000000000000000024 /* filter-counts.json */,
 			);
 			sourceTree = "<group>";
 			path = "Shared";
 		};
-		A10000000000000000000031 /* Config */ = {
+		A10000000000000000000038 /* Config */ = {
 			isa = "PBXGroup";
 			children = (
-				A10000000000000000000020 /* Shared.xcconfig */,
-				A10000000000000000000021 /* Local.xcconfig.example */,
+				A10000000000000000000025 /* Shared.xcconfig */,
+				A10000000000000000000026 /* Local.xcconfig.example */,
 			);
 			sourceTree = "<group>";
 			path = "Config";
 		};
-		A10000000000000000000032 /* docs */ = {
+		A10000000000000000000039 /* docs */ = {
 			isa = "PBXGroup";
 			children = (
-				A10000000000000000000022 /* ARCHITECTURE.md */,
-				A10000000000000000000023 /* ROADMAP.md */,
+				A10000000000000000000027 /* ARCHITECTURE.md */,
+				A10000000000000000000028 /* ROADMAP.md */,
 			);
 			sourceTree = "<group>";
 			path = "docs";
 		};
-		A10000000000000000000033 /* Frameworks */ = {
+		A1000000000000000000003A /* Frameworks */ = {
 			isa = "PBXGroup";
 			children = (
-				A10000000000000000000025 /* SafariServices.framework */,
-				A10000000000000000000026 /* Network.framework */,
+				A1000000000000000000002A /* SafariServices.framework */,
+				A1000000000000000000002B /* Network.framework */,
 			);
 			sourceTree = "<group>";
 			name = "Frameworks";
 		};
-		A10000000000000000000034 /* Products */ = {
+		A1000000000000000000003B /* Products */ = {
 			isa = "PBXGroup";
 			children = (
-				A10000000000000000000027 /* QuietSafari.app */,
-				A10000000000000000000028 /* QuietSafariExtension.appex */,
-				A10000000000000000000029 /* QuietSafariContentBlocker.appex */,
-				A1000000000000000000002A /* QuietSafariPrivacy.appex */,
+				A1000000000000000000002C /* QuietSafari.app */,
+				A1000000000000000000002D /* QuietSafariExtension.appex */,
+				A1000000000000000000002E /* QuietSafariContentBlocker.appex */,
+				A1000000000000000000002F /* QuietSafariPrivacy.appex */,
+				A10000000000000000000030 /* QuietSafariRussian.appex */,
 			);
 			sourceTree = "<group>";
 			name = "Products";
 		};
-		A10000000000000000000035 /* QuietSafari */ = {
+		A1000000000000000000003C /* QuietSafari */ = {
 			isa = "PBXGroup";
 			children = (
-				A1000000000000000000002C /* App */,
-				A1000000000000000000002D /* Extension */,
-				A1000000000000000000002E /* ContentBlocker */,
-				A1000000000000000000002F /* Privacy */,
-				A10000000000000000000030 /* Shared */,
-				A10000000000000000000031 /* Config */,
-				A10000000000000000000032 /* docs */,
-				A10000000000000000000024 /* README.md */,
-				A10000000000000000000033 /* Frameworks */,
-				A10000000000000000000034 /* Products */,
+				A10000000000000000000032 /* App */,
+				A10000000000000000000033 /* Extension */,
+				A10000000000000000000034 /* ContentBlocker */,
+				A10000000000000000000035 /* Privacy */,
+				A10000000000000000000036 /* Russian */,
+				A10000000000000000000037 /* Shared */,
+				A10000000000000000000038 /* Config */,
+				A10000000000000000000039 /* docs */,
+				A10000000000000000000029 /* README.md */,
+				A1000000000000000000003A /* Frameworks */,
+				A1000000000000000000003B /* Products */,
 			);
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A10000000000000000000077 /* QuietSafariExtension */ = {
+		A1000000000000000000008C /* QuietSafariExtension */ = {
 			isa = "PBXNativeTarget";
-			buildConfigurationList = A10000000000000000000072 /* Build configuration list for PBXNativeTarget "QuietSafariExtension" */;
+			buildConfigurationList = A10000000000000000000086 /* Build configuration list for PBXNativeTarget "QuietSafariExtension" */;
 			buildPhases = (
-				A1000000000000000000004E /* Sources */,
-				A1000000000000000000005A /* Frameworks */,
-				A10000000000000000000058 /* Resources */,
+				A10000000000000000000057 /* Sources */,
+				A10000000000000000000066 /* Frameworks */,
+				A10000000000000000000064 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -656,16 +761,16 @@
 			);
 			name = "QuietSafariExtension";
 			productName = "QuietSafariExtension";
-			productReference = A10000000000000000000028 /* QuietSafariExtension.appex */;
+			productReference = A1000000000000000000002D /* QuietSafariExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		A10000000000000000000078 /* QuietSafariContentBlocker */ = {
+		A1000000000000000000008D /* QuietSafariContentBlocker */ = {
 			isa = "PBXNativeTarget";
-			buildConfigurationList = A10000000000000000000073 /* Build configuration list for PBXNativeTarget "QuietSafariContentBlocker" */;
+			buildConfigurationList = A10000000000000000000087 /* Build configuration list for PBXNativeTarget "QuietSafariContentBlocker" */;
 			buildPhases = (
-				A1000000000000000000005D /* Sources */,
-				A10000000000000000000060 /* Frameworks */,
-				A1000000000000000000005F /* Resources */,
+				A10000000000000000000069 /* Sources */,
+				A1000000000000000000006C /* Frameworks */,
+				A1000000000000000000006B /* Resources */,
 			);
 			buildRules = (
 			);
@@ -673,16 +778,33 @@
 			);
 			name = "QuietSafariContentBlocker";
 			productName = "QuietSafariContentBlocker";
-			productReference = A10000000000000000000029 /* QuietSafariContentBlocker.appex */;
+			productReference = A1000000000000000000002E /* QuietSafariContentBlocker.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		A10000000000000000000079 /* QuietSafariPrivacy */ = {
+		A1000000000000000000008E /* QuietSafariRussian */ = {
 			isa = "PBXNativeTarget";
-			buildConfigurationList = A10000000000000000000074 /* Build configuration list for PBXNativeTarget "QuietSafariPrivacy" */;
+			buildConfigurationList = A10000000000000000000089 /* Build configuration list for PBXNativeTarget "QuietSafariRussian" */;
 			buildPhases = (
-				A10000000000000000000063 /* Sources */,
-				A10000000000000000000066 /* Frameworks */,
-				A10000000000000000000065 /* Resources */,
+				A10000000000000000000075 /* Sources */,
+				A10000000000000000000078 /* Frameworks */,
+				A10000000000000000000077 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "QuietSafariRussian";
+			productName = "QuietSafariRussian";
+			productReference = A10000000000000000000030 /* QuietSafariRussian.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A1000000000000000000008F /* QuietSafariPrivacy */ = {
+			isa = "PBXNativeTarget";
+			buildConfigurationList = A10000000000000000000088 /* Build configuration list for PBXNativeTarget "QuietSafariPrivacy" */;
+			buildPhases = (
+				A1000000000000000000006F /* Sources */,
+				A10000000000000000000072 /* Frameworks */,
+				A10000000000000000000071 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -690,55 +812,59 @@
 			);
 			name = "QuietSafariPrivacy";
 			productName = "QuietSafariPrivacy";
-			productReference = A1000000000000000000002A /* QuietSafariPrivacy.appex */;
+			productReference = A1000000000000000000002F /* QuietSafariPrivacy.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		A10000000000000000000080 /* QuietSafari */ = {
+		A10000000000000000000098 /* QuietSafari */ = {
 			isa = "PBXNativeTarget";
-			buildConfigurationList = A10000000000000000000071 /* Build configuration list for PBXNativeTarget "QuietSafari" */;
+			buildConfigurationList = A10000000000000000000085 /* Build configuration list for PBXNativeTarget "QuietSafari" */;
 			buildPhases = (
-				A1000000000000000000003E /* Sources */,
-				A10000000000000000000047 /* Frameworks */,
-				A10000000000000000000044 /* Resources */,
-				A1000000000000000000004B /* Embed Foundation Extensions */,
+				A10000000000000000000045 /* Sources */,
+				A1000000000000000000004F /* Frameworks */,
+				A1000000000000000000004C /* Resources */,
+				A10000000000000000000054 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				A1000000000000000000007B /* QuietSafariExtension */,
-				A1000000000000000000007D /* QuietSafariContentBlocker */,
-				A1000000000000000000007F /* QuietSafariPrivacy */,
+				A10000000000000000000091 /* QuietSafariExtension */,
+				A10000000000000000000093 /* QuietSafariContentBlocker */,
+				A10000000000000000000095 /* QuietSafariPrivacy */,
+				A10000000000000000000097 /* QuietSafariRussian */,
 			);
 			name = "QuietSafari";
 			productName = "QuietSafari";
-			productReference = A10000000000000000000027 /* QuietSafari.app */;
+			productReference = A1000000000000000000002C /* QuietSafari.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		A10000000000000000000076 /* Project object */ = {
+		A1000000000000000000008B /* Project object */ = {
 			isa = "PBXProject";
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				ORGANIZATIONNAME = "QuietSafari";
 				TargetAttributes = {
-					A10000000000000000000080 = {
+					A10000000000000000000098 = {
 						CreatedOnToolsVersion = "16.0";
 					};
-					A10000000000000000000077 = {
+					A1000000000000000000008C = {
 						CreatedOnToolsVersion = "16.0";
 					};
-					A10000000000000000000078 = {
+					A1000000000000000000008D = {
 						CreatedOnToolsVersion = "16.0";
 					};
-					A10000000000000000000079 = {
+					A1000000000000000000008F = {
+						CreatedOnToolsVersion = "16.0";
+					};
+					A1000000000000000000008E = {
 						CreatedOnToolsVersion = "16.0";
 					};
 				};
 			};
-			buildConfigurationList = A10000000000000000000075 /* Build configuration list for PBXProject */;
+			buildConfigurationList = A1000000000000000000008A /* Build configuration list for PBXProject */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = "en";
 			hasScannedForEncodings = 0;
@@ -746,64 +872,78 @@
 				"en",
 				"Base",
 			);
-			mainGroup = A10000000000000000000035 /* QuietSafari */;
-			productRefGroup = A10000000000000000000034 /* Products */;
+			mainGroup = A1000000000000000000003C /* QuietSafari */;
+			productRefGroup = A1000000000000000000003B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A10000000000000000000080 /* QuietSafari */,
-				A10000000000000000000077 /* QuietSafariExtension */,
-				A10000000000000000000078 /* QuietSafariContentBlocker */,
-				A10000000000000000000079 /* QuietSafariPrivacy */,
+				A10000000000000000000098 /* QuietSafari */,
+				A1000000000000000000008C /* QuietSafariExtension */,
+				A1000000000000000000008D /* QuietSafariContentBlocker */,
+				A1000000000000000000008F /* QuietSafariPrivacy */,
+				A1000000000000000000008E /* QuietSafariRussian */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A10000000000000000000044 /* Resources */ = {
+		A1000000000000000000004C /* Resources */ = {
 			isa = "PBXResourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A1000000000000000000003F /* Assets.xcassets */,
-				A10000000000000000000040 /* TestPage.html */,
-				A10000000000000000000041 /* blockerList.json */,
-				A10000000000000000000042 /* privacyList.json */,
-				A10000000000000000000043 /* filter-counts.json */,
+				A10000000000000000000046 /* Assets.xcassets */,
+				A10000000000000000000047 /* TestPage.html */,
+				A10000000000000000000048 /* blockerList.json */,
+				A10000000000000000000049 /* privacyList.json */,
+				A1000000000000000000004A /* russianList.json */,
+				A1000000000000000000004B /* filter-counts.json */,
 			);
 			name = "Resources";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000058 /* Resources */ = {
+		A10000000000000000000064 /* Resources */ = {
 			isa = "PBXResourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A1000000000000000000004F /* manifest.json */,
-				A10000000000000000000050 /* background.js */,
-				A10000000000000000000051 /* cosmetic.js */,
-				A10000000000000000000052 /* youtube.js */,
-				A10000000000000000000053 /* popup.html */,
-				A10000000000000000000054 /* popup.css */,
-				A10000000000000000000055 /* popup.js */,
-				A10000000000000000000056 /* youtube-main.js */,
-				A10000000000000000000057 /* images */,
+				A10000000000000000000058 /* manifest.json */,
+				A10000000000000000000059 /* background.js */,
+				A1000000000000000000005A /* cosmetic.js */,
+				A1000000000000000000005B /* youtube.js */,
+				A1000000000000000000005C /* popup.html */,
+				A1000000000000000000005D /* popup.css */,
+				A1000000000000000000005E /* popup.js */,
+				A1000000000000000000005F /* youtube-main.js */,
+				A10000000000000000000060 /* engine.js */,
+				A10000000000000000000061 /* engine-rules.js */,
+				A10000000000000000000062 /* cookies.js */,
+				A10000000000000000000063 /* images */,
 			);
 			name = "Resources";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A1000000000000000000005F /* Resources */ = {
+		A1000000000000000000006B /* Resources */ = {
 			isa = "PBXResourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A1000000000000000000005E /* blockerList.json */,
+				A1000000000000000000006A /* blockerList.json */,
 			);
 			name = "Resources";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000065 /* Resources */ = {
+		A10000000000000000000071 /* Resources */ = {
 			isa = "PBXResourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000064 /* privacyList.json */,
+				A10000000000000000000070 /* privacyList.json */,
+			);
+			name = "Resources";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000077 /* Resources */ = {
+			isa = "PBXResourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000076 /* russianList.json */,
 			);
 			name = "Resources";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -811,48 +951,58 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A1000000000000000000003E /* Sources */ = {
+		A10000000000000000000045 /* Sources */ = {
 			isa = "PBXSourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000036 /* QuietSafariApp.swift */,
-				A10000000000000000000037 /* ContentView.swift */,
-				A10000000000000000000038 /* SettingsStore.swift */,
-				A10000000000000000000039 /* RuleCompiler.swift */,
-				A1000000000000000000003A /* TestPageServer.swift */,
-				A1000000000000000000003B /* FilterConverter.swift */,
-				A1000000000000000000003C /* FilterLibrary.swift */,
-				A1000000000000000000003D /* QuietSafariShared.swift */,
+				A1000000000000000000003D /* QuietSafariApp.swift */,
+				A1000000000000000000003E /* ContentView.swift */,
+				A1000000000000000000003F /* SettingsStore.swift */,
+				A10000000000000000000040 /* RuleCompiler.swift */,
+				A10000000000000000000041 /* TestPageServer.swift */,
+				A10000000000000000000042 /* FilterConverter.swift */,
+				A10000000000000000000043 /* FilterLibrary.swift */,
+				A10000000000000000000044 /* QuietSafariShared.swift */,
 			);
 			name = "Sources";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A1000000000000000000004E /* Sources */ = {
+		A10000000000000000000057 /* Sources */ = {
 			isa = "PBXSourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A1000000000000000000004C /* SafariWebExtensionHandler.swift */,
-				A1000000000000000000004D /* QuietSafariShared.swift */,
+				A10000000000000000000055 /* SafariWebExtensionHandler.swift */,
+				A10000000000000000000056 /* QuietSafariShared.swift */,
 			);
 			name = "Sources";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A1000000000000000000005D /* Sources */ = {
+		A10000000000000000000069 /* Sources */ = {
 			isa = "PBXSourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A1000000000000000000005B /* ContentBlockerRequestHandler.swift */,
-				A1000000000000000000005C /* QuietSafariShared.swift */,
+				A10000000000000000000067 /* ContentBlockerRequestHandler.swift */,
+				A10000000000000000000068 /* QuietSafariShared.swift */,
 			);
 			name = "Sources";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000063 /* Sources */ = {
+		A1000000000000000000006F /* Sources */ = {
 			isa = "PBXSourcesBuildPhase";
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000061 /* ContentBlockerRequestHandler.swift */,
-				A10000000000000000000062 /* QuietSafariShared.swift */,
+				A1000000000000000000006D /* ContentBlockerRequestHandler.swift */,
+				A1000000000000000000006E /* QuietSafariShared.swift */,
+			);
+			name = "Sources";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000075 /* Sources */ = {
+			isa = "PBXSourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000073 /* ContentBlockerRequestHandler.swift */,
+				A10000000000000000000074 /* QuietSafariShared.swift */,
 			);
 			name = "Sources";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -860,27 +1010,32 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		A1000000000000000000007B /* QuietSafariExtension */ = {
+		A10000000000000000000091 /* QuietSafariExtension */ = {
 			isa = "PBXTargetDependency";
-			target = A10000000000000000000077 /* QuietSafariExtension */;
-			targetProxy = A1000000000000000000007A /* PBXContainerItemProxy */;
+			target = A1000000000000000000008C /* QuietSafariExtension */;
+			targetProxy = A10000000000000000000090 /* PBXContainerItemProxy */;
 		};
-		A1000000000000000000007D /* QuietSafariContentBlocker */ = {
+		A10000000000000000000093 /* QuietSafariContentBlocker */ = {
 			isa = "PBXTargetDependency";
-			target = A10000000000000000000078 /* QuietSafariContentBlocker */;
-			targetProxy = A1000000000000000000007C /* PBXContainerItemProxy */;
+			target = A1000000000000000000008D /* QuietSafariContentBlocker */;
+			targetProxy = A10000000000000000000092 /* PBXContainerItemProxy */;
 		};
-		A1000000000000000000007F /* QuietSafariPrivacy */ = {
+		A10000000000000000000095 /* QuietSafariPrivacy */ = {
 			isa = "PBXTargetDependency";
-			target = A10000000000000000000079 /* QuietSafariPrivacy */;
-			targetProxy = A1000000000000000000007E /* PBXContainerItemProxy */;
+			target = A1000000000000000000008F /* QuietSafariPrivacy */;
+			targetProxy = A10000000000000000000094 /* PBXContainerItemProxy */;
+		};
+		A10000000000000000000097 /* QuietSafariRussian */ = {
+			isa = "PBXTargetDependency";
+			target = A1000000000000000000008E /* QuietSafariRussian */;
+			targetProxy = A10000000000000000000096 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		A10000000000000000000067 /* Debug */ = {
+		A10000000000000000000079 /* Debug */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "AccentColor";
@@ -899,9 +1054,9 @@
 			};
 			name = "Debug";
 		};
-		A10000000000000000000068 /* Release */ = {
+		A1000000000000000000007A /* Release */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "AccentColor";
@@ -920,9 +1075,9 @@
 			};
 			name = "Release";
 		};
-		A10000000000000000000069 /* Debug */ = {
+		A1000000000000000000007B /* Debug */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = "Extension/QuietSafariExtension.entitlements";
@@ -941,9 +1096,9 @@
 			};
 			name = "Debug";
 		};
-		A1000000000000000000006A /* Release */ = {
+		A1000000000000000000007C /* Release */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = "Extension/QuietSafariExtension.entitlements";
@@ -962,9 +1117,9 @@
 			};
 			name = "Release";
 		};
-		A1000000000000000000006B /* Debug */ = {
+		A1000000000000000000007D /* Debug */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = "ContentBlocker/QuietSafariContentBlocker.entitlements";
@@ -983,9 +1138,9 @@
 			};
 			name = "Debug";
 		};
-		A1000000000000000000006C /* Release */ = {
+		A1000000000000000000007E /* Release */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = "ContentBlocker/QuietSafariContentBlocker.entitlements";
@@ -1004,9 +1159,9 @@
 			};
 			name = "Release";
 		};
-		A1000000000000000000006D /* Debug */ = {
+		A1000000000000000000007F /* Debug */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = "ContentBlocker/QuietSafariContentBlocker.entitlements";
@@ -1025,9 +1180,9 @@
 			};
 			name = "Debug";
 		};
-		A1000000000000000000006E /* Release */ = {
+		A10000000000000000000080 /* Release */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = "ContentBlocker/QuietSafariContentBlocker.entitlements";
@@ -1046,9 +1201,51 @@
 			};
 			name = "Release";
 		};
-		A1000000000000000000006F /* Debug */ = {
+		A10000000000000000000081 /* Debug */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "ContentBlocker/QuietSafariContentBlocker.entitlements";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Russian/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(QUIETSAFARI_RUSSIAN_BUNDLE_ID)";
+				PRODUCT_MODULE_NAME = "QuietSafariRussian";
+				PRODUCT_NAME = "QuietSafariRussian";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = "appex";
+			};
+			name = "Debug";
+		};
+		A10000000000000000000082 /* Release */ = {
+			isa = "XCBuildConfiguration";
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "ContentBlocker/QuietSafariContentBlocker.entitlements";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Russian/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(QUIETSAFARI_RUSSIAN_BUNDLE_ID)";
+				PRODUCT_MODULE_NAME = "QuietSafariRussian";
+				PRODUCT_NAME = "QuietSafariRussian";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = "appex";
+			};
+			name = "Release";
+		};
+		A10000000000000000000083 /* Debug */ = {
+			isa = "XCBuildConfiguration";
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1086,9 +1283,9 @@
 			};
 			name = "Debug";
 		};
-		A10000000000000000000070 /* Release */ = {
+		A10000000000000000000084 /* Release */ = {
 			isa = "XCBuildConfiguration";
-			baseConfigurationReference = A10000000000000000000020 /* Shared.xcconfig */;
+			baseConfigurationReference = A10000000000000000000025 /* Shared.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1125,52 +1322,61 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10000000000000000000071 /* Build configuration list for PBXNativeTarget "QuietSafari" */ = {
+		A10000000000000000000085 /* Build configuration list for PBXNativeTarget "QuietSafari" */ = {
 			isa = "XCConfigurationList";
 			buildConfigurations = (
-				A10000000000000000000067 /* Debug */,
-				A10000000000000000000068 /* Release */,
+				A10000000000000000000079 /* Debug */,
+				A1000000000000000000007A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Release";
 		};
-		A10000000000000000000072 /* Build configuration list for PBXNativeTarget "QuietSafariExtension" */ = {
+		A10000000000000000000086 /* Build configuration list for PBXNativeTarget "QuietSafariExtension" */ = {
 			isa = "XCConfigurationList";
 			buildConfigurations = (
-				A10000000000000000000069 /* Debug */,
-				A1000000000000000000006A /* Release */,
+				A1000000000000000000007B /* Debug */,
+				A1000000000000000000007C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Release";
 		};
-		A10000000000000000000073 /* Build configuration list for PBXNativeTarget "QuietSafariContentBlocker" */ = {
+		A10000000000000000000087 /* Build configuration list for PBXNativeTarget "QuietSafariContentBlocker" */ = {
 			isa = "XCConfigurationList";
 			buildConfigurations = (
-				A1000000000000000000006B /* Debug */,
-				A1000000000000000000006C /* Release */,
+				A1000000000000000000007D /* Debug */,
+				A1000000000000000000007E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Release";
 		};
-		A10000000000000000000074 /* Build configuration list for PBXNativeTarget "QuietSafariPrivacy" */ = {
+		A10000000000000000000088 /* Build configuration list for PBXNativeTarget "QuietSafariPrivacy" */ = {
 			isa = "XCConfigurationList";
 			buildConfigurations = (
-				A1000000000000000000006D /* Debug */,
-				A1000000000000000000006E /* Release */,
+				A1000000000000000000007F /* Debug */,
+				A10000000000000000000080 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Release";
 		};
-		A10000000000000000000075 /* Build configuration list for PBXProject */ = {
+		A10000000000000000000089 /* Build configuration list for PBXNativeTarget "QuietSafariRussian" */ = {
 			isa = "XCConfigurationList";
 			buildConfigurations = (
-				A1000000000000000000006F /* Debug */,
-				A10000000000000000000070 /* Release */,
+				A10000000000000000000081 /* Debug */,
+				A10000000000000000000082 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		A1000000000000000000008A /* Build configuration list for PBXProject */ = {
+			isa = "XCConfigurationList";
+			buildConfigurations = (
+				A10000000000000000000083 /* Debug */,
+				A10000000000000000000084 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Release";
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = A10000000000000000000076 /* Project object */;
+	rootObject = A1000000000000000000008B /* Project object */;
 }

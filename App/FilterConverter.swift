@@ -6,32 +6,45 @@ import Foundation
 enum FilterConverter {
     static let easyListURL = URL(string: "https://easylist.to/easylist/easylist.txt")!
     static let easyPrivacyURL = URL(string: "https://easylist.to/easylist/easyprivacy.txt")!
+    static let ruAdListURL = URL(string: "https://easylist-downloads.adblockplus.org/advblock.txt")!
     static let maxRules = 140_000
     static let maxBytes = 7_200_000
 
     struct Converted {
         var ads: Data
         var privacy: Data
+        var russian: Data
         var adCount: Int
         var privacyCount: Int
+        var russianCount: Int
     }
 
-    static func convert(easyList: String, easyPrivacy: String) -> Converted? {
+    static func convert(easyList: String, easyPrivacy: String, russian: String) -> Converted? {
         let adsRules = FilterPieces.fit(FilterPieces.convertText(easyList))
-        let privacyRules = FilterPieces.fit(FilterPieces.convertText(easyPrivacy))
-        guard adsRules.count > 10_000, privacyRules.count > 10_000 else {
+        var privacyRules = FilterPieces.fit(FilterPieces.convertText(easyPrivacy))
+        var russianRules = FilterPieces.fit(FilterPieces.convertText(russian))
+        privacyRules.append(contentsOf: FilterPieces.yandexPrivacyRules())
+        russianRules.append(contentsOf: FilterPieces.yandexAdRules())
+        guard adsRules.count > 10_000, privacyRules.count > 10_000, russianRules.count > 5_000 else {
             return nil
         }
-        guard safe(adsRules), safe(privacyRules) else {
+        guard safe(adsRules), safe(privacyRules), safe(russianRules) else {
             return nil
         }
-        guard let ads = encode(adsRules), let privacy = encode(privacyRules) else {
+        guard let ads = encode(adsRules), let privacy = encode(privacyRules), let russianData = encode(russianRules) else {
             return nil
         }
-        guard ads.count <= maxBytes, privacy.count <= maxBytes else {
+        guard ads.count <= maxBytes + 8192, privacy.count <= maxBytes + 8192, russianData.count <= maxBytes else {
             return nil
         }
-        return Converted(ads: ads, privacy: privacy, adCount: adsRules.count, privacyCount: privacyRules.count)
+        return Converted(
+            ads: ads,
+            privacy: privacy,
+            russian: russianData,
+            adCount: adsRules.count,
+            privacyCount: privacyRules.count,
+            russianCount: russianRules.count
+        )
     }
 
     private static func encode(_ rules: [[String: Any]]) -> Data? {
@@ -47,6 +60,10 @@ enum FilterConverter {
             "https://www.youtube.com/",
             "https://rr1---sn-xxxx.googlevideo.com/videoplayback?id=1",
             "https://www.google.com/",
+            "https://yandex.ru/",
+            "https://ya.ru/",
+            "https://yandex.ru/maps/213/moscow/",
+            "https://yastatic.net/s3/home-static/logo.png",
         ]
         for rule in rules {
             guard (rule["action"] as? [String: Any])?["type"] as? String == "block",
@@ -57,7 +74,7 @@ enum FilterConverter {
             if pattern == ".*" {
                 return false
             }
-            let interesting = pattern.contains("youtube") || pattern.contains("googlevideo") || pattern.contains("ytimg") || pattern.contains("google.com")
+            let interesting = pattern.contains("youtube") || pattern.contains("googlevideo") || pattern.contains("ytimg") || pattern.contains("google.com") || pattern.contains("yandex") || pattern.contains("yastatic")
             guard interesting, let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
                 continue
             }
@@ -203,6 +220,47 @@ private enum FilterPieces {
         return urls.contains { url in
             expression.firstMatch(in: url, options: [], range: NSRange(url.startIndex..., in: url)) != nil
         }
+    }
+
+    static func hostBlock(_ host: String) -> [String: Any] {
+        let pattern = abpToRegex("||\(host)^") ?? "^\(host)$"
+        return ["action": ["type": "block"], "trigger": ["url-filter": pattern]]
+    }
+
+    static func pathBlock(_ host: String, _ path: String) -> [String: Any] {
+        let escaped = host.replacingOccurrences(of: ".", with: "\\.")
+        return [
+            "action": ["type": "block"],
+            "trigger": ["url-filter": "^https?://([^/?#]*\\.)?\(escaped)\(path)"],
+        ]
+    }
+
+    static func yandexAdRules() -> [[String: Any]] {
+        var rules: [[String: Any]] = ["an.yandex.ru", "yabs.yandex.ru", "adfox.yandex.ru", "ads.adfox.ru", "yandexadexchange.net"].map(hostBlock)
+        rules.append(pathBlock("yandex.ru", "/ads/"))
+        rules.append(pathBlock("yandex.ru", "/an/"))
+        rules.append(pathBlock("yandex.com", "/ads/"))
+        rules.append(pathBlock("yastatic.net", "/partner-code"))
+        rules.append(pathBlock("yastatic.net", "/pcode/"))
+        rules.append(pathBlock("yastatic.net", "/safeframe-bundles/"))
+        let selectors = [
+            "div[id^=\"yandex_rtb\"]",
+            "div[class^=\"yandex_rtb\"]",
+            "div[id^=\"adfox_\"]",
+            ".yandex-rtb",
+            ".yandex-rtb-block",
+            "iframe[src*=\"an.yandex.ru\"]",
+            "iframe[src*=\"yandex.ru/ads\"]",
+            "iframe[src*=\"adfox.yandex\"]",
+        ]
+        for selector in selectors {
+            rules.append(["action": ["selector": selector, "type": "css-display-none"], "trigger": ["url-filter": ".*"]])
+        }
+        return rules.filter { !isProtected($0) }
+    }
+
+    static func yandexPrivacyRules() -> [[String: Any]] {
+        ["mc.yandex.ru", "mc.yandex.com", "mc.yandex.by", "mc.yandex.kz"].map(hostBlock).filter { !isProtected($0) }
     }
 
     static func networkRule(_ line: String) -> [String: Any]? {

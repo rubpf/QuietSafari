@@ -22,6 +22,7 @@ struct ContentView: View {
             .formStyle(.grouped)
         }
         .frame(minWidth: 580, minHeight: 720)
+        .tint(QuietSafariPalette.sage)
         .onAppear { store.start() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -30,15 +31,13 @@ struct ContentView: View {
         }
     }
 
-    private var accent: Color { Color(red: 0.11, green: 0.48, blue: 0.28) }
-
     private var header: some View {
         HStack(alignment: .center, spacing: 14) {
-            Image(systemName: "leaf.fill")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(accent)
-                .frame(width: 44, height: 44)
-                .background(accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            Image("QuietSafariMark")
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 32, height: 32)
+                .accessibilityLabel("QuietSafari")
             VStack(alignment: .leading, spacing: 3) {
                 Text("QuietSafari")
                     .font(.title2.weight(.semibold))
@@ -161,10 +160,10 @@ struct ContentView: View {
 
     private var stateSection: some View {
         Section {
-            labeledState("QuietSafari Content Blocker", enabled: store.contentBlockerEnabled, problem: store.contentBlockerProblem)
-            labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled, problem: store.privacyProblem)
-            labeledState("QuietSafari Russian", enabled: store.russianBlockerEnabled, problem: store.russianProblem)
-            labeledState("QuietSafari", enabled: store.webExtensionEnabled, problem: "")
+            labeledState("QuietSafari Content Blocker", enabled: store.contentBlockerEnabled, problem: store.contentBlockerProblem, updating: store.contentBlockerUpdating)
+            labeledState("QuietSafari Privacy", enabled: store.privacyBlockerEnabled, problem: store.privacyProblem, updating: store.privacyUpdating)
+            labeledState("QuietSafari Russian", enabled: store.russianBlockerEnabled, problem: store.russianProblem, updating: store.russianUpdating)
+            labeledState("QuietSafari", enabled: store.webExtensionEnabled, problem: "", updating: false)
             LabeledContent("Общая папка") {
                 Text(store.appGroupAvailable ? "доступна" : "недоступна")
                     .foregroundStyle(store.appGroupAvailable ? Color.secondary : Color.orange)
@@ -189,18 +188,18 @@ struct ContentView: View {
         }
     }
 
-    private func labeledState(_ title: String, enabled: Bool?, problem: String) -> some View {
+    private func labeledState(_ title: String, enabled: Bool?, problem: String, updating: Bool) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             LabeledContent(title) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(dotColor(enabled, problem: problem))
+                        .fill(dotColor(enabled, problem: problem, updating: updating))
                         .frame(width: 8, height: 8)
-                    Text(problem.isEmpty ? statusWord(enabled) : "ошибка")
-                        .foregroundStyle(problem.isEmpty && enabled != false ? Color.secondary : Color.orange)
+                    Text(statusWord(enabled, problem: problem, updating: updating))
+                        .foregroundStyle(problem.isEmpty || updating ? Color.secondary : Color.orange)
                 }
             }
-            if !problem.isEmpty {
+            if !problem.isEmpty && !updating {
                 Text(problem)
                     .font(.caption)
                     .foregroundStyle(.orange)
@@ -210,17 +209,26 @@ struct ContentView: View {
         }
     }
 
-    private func dotColor(_ enabled: Bool?, problem: String) -> Color {
+    private func dotColor(_ enabled: Bool?, problem: String, updating: Bool) -> Color {
+        if updating {
+            return QuietSafariPalette.sage.opacity(0.85)
+        }
         if !problem.isEmpty || enabled == false {
             return .orange
         }
         if enabled == true {
-            return accent
+            return QuietSafariPalette.sage
         }
         return Color.secondary.opacity(0.45)
     }
 
-    private func statusWord(_ enabled: Bool?) -> String {
+    private func statusWord(_ enabled: Bool?, problem: String, updating: Bool) -> String {
+        if updating {
+            return "обновляется…"
+        }
+        if !problem.isEmpty {
+            return "ошибка"
+        }
         switch enabled {
         case true: return "включено"
         case false: return "выключено"

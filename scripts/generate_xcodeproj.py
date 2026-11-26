@@ -231,6 +231,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "FilterConverter.swift": file_ref(project, "FilterConverter.swift", "sourcecode.swift", "App/FilterConverter.swift"),
         "FilterLibrary.swift": file_ref(project, "FilterLibrary.swift", "sourcecode.swift", "App/FilterLibrary.swift"),
         "MenuBar.swift": file_ref(project, "MenuBar.swift", "sourcecode.swift", "App/MenuBar.swift"),
+        "QuietSafariPalette.swift": file_ref(project, "QuietSafariPalette.swift", "sourcecode.swift", "App/QuietSafariPalette.swift"),
     }
     app_plist = file_ref(project, "Info.plist", "text.plist.xml", "App/Info.plist")
     app_ents = file_ref(project, "QuietSafari.entitlements", "text.plist.entitlements", "App/QuietSafari.entitlements")
@@ -392,6 +393,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(app_sources["FilterConverter.swift"], "FilterConverter.swift"),
             project.ref(app_sources["FilterLibrary.swift"], "FilterLibrary.swift"),
             project.ref(app_sources["MenuBar.swift"], "MenuBar.swift"),
+            project.ref(app_sources["QuietSafariPalette.swift"], "QuietSafariPalette.swift"),
             project.ref(assets, "Assets.xcassets"),
             project.ref(test_page, "TestPage.html"),
             project.ref(app_plist, "Info.plist"),

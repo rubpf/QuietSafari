@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Menu-bar control. The leaf is a template image so macOS draws it for light and dark menus.
@@ -6,18 +7,21 @@ final class MenuBarController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let popover = NSPopover()
     private let store: SettingsStore
+    private var iconObserver: AnyCancellable?
 
     init(store: SettingsStore) {
         self.store = store
         super.init()
         if let button = statusItem.button {
-            let image = NSImage(named: "MenuBarIcon") ?? NSImage(systemSymbolName: "leaf", accessibilityDescription: "QuietSafari")
-            image?.isTemplate = true
-            image?.size = NSSize(width: 18, height: 18)
-            button.image = image
             button.action = #selector(togglePopover)
             button.target = self
         }
+        applyStatusIcon(blockingEnabled: store.blockingEnabled)
+        iconObserver = store.$blockingEnabled
+            .receive(on: RunLoop.main)
+            .sink { [weak self] enabled in
+                self?.applyStatusIcon(blockingEnabled: enabled)
+            }
         popover.behavior = .transient
         popover.contentSize = NSSize(width: 300, height: 420)
         popover.contentViewController = NSHostingController(rootView: MenuBarView(store: store))
@@ -34,19 +38,28 @@ final class MenuBarController: NSObject {
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    private func applyStatusIcon(blockingEnabled: Bool) {
+        let name = blockingEnabled ? "MenuBarIcon" : "MenuBarIconOutline"
+        let image = NSImage(named: name) ?? NSImage(systemSymbolName: "leaf", accessibilityDescription: "QuietSafari")
+        image?.isTemplate = true
+        image?.size = NSSize(width: 18, height: 18)
+        statusItem.button?.image = image
+    }
 }
 
 private struct MenuBarView: View {
     @ObservedObject var store: SettingsStore
     @State private var draft = ""
 
-    private var accent: Color { Color(red: 0.11, green: 0.48, blue: 0.28) }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .foregroundStyle(accent)
+                Image("QuietSafariMark")
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 20, height: 20)
+                    .accessibilityLabel("QuietSafari")
                 Text("QuietSafari")
                     .font(.headline)
                 Spacer()
@@ -63,10 +76,10 @@ private struct MenuBarView: View {
                     .foregroundStyle(.secondary)
             }
             VStack(alignment: .leading, spacing: 4) {
-                statusLine("Content Blocker", on: store.contentBlockerEnabled, problem: store.contentBlockerProblem)
-                statusLine("Privacy", on: store.privacyBlockerEnabled, problem: store.privacyProblem)
-                statusLine("Russian", on: store.russianBlockerEnabled, problem: store.russianProblem)
-                statusLine("Веб-расширение", on: store.webExtensionEnabled, problem: "")
+                statusLine("Content Blocker", on: store.contentBlockerEnabled, problem: store.contentBlockerProblem, updating: store.contentBlockerUpdating)
+                statusLine("Privacy", on: store.privacyBlockerEnabled, problem: store.privacyProblem, updating: store.privacyUpdating)
+                statusLine("Russian", on: store.russianBlockerEnabled, problem: store.russianProblem, updating: store.russianUpdating)
+                statusLine("Веб-расширение", on: store.webExtensionEnabled, problem: "", updating: false)
             }
             if let hint = offHint {
                 Text(hint)
@@ -90,6 +103,7 @@ private struct MenuBarView: View {
         }
         .padding(14)
         .frame(width: 300)
+        .tint(QuietSafariPalette.sage)
     }
 
     private var siteRow: some View {
@@ -121,6 +135,9 @@ private struct MenuBarView: View {
     }
 
     private var offHint: String? {
+        if store.contentBlockerUpdating || store.privacyUpdating || store.russianUpdating {
+            return nil
+        }
         let problems = [store.contentBlockerProblem, store.privacyProblem, store.russianProblem].filter { !$0.isEmpty }
         if !problems.isEmpty {
             return problems.joined(separator: " ")
@@ -131,31 +148,37 @@ private struct MenuBarView: View {
         return nil
     }
 
-    private func statusLine(_ title: String, on: Bool?, problem: String) -> some View {
+    private func statusLine(_ title: String, on: Bool?, problem: String, updating: Bool) -> some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(color(on: on, problem: problem))
+                .fill(color(on: on, problem: problem, updating: updating))
                 .frame(width: 7, height: 7)
             Text(title)
                 .font(.caption)
             Spacer()
-            Text(label(on: on, problem: problem))
+            Text(label(on: on, problem: problem, updating: updating))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(problem.isEmpty || updating ? Color.secondary : Color.orange)
         }
     }
 
-    private func color(on: Bool?, problem: String) -> Color {
+    private func color(on: Bool?, problem: String, updating: Bool) -> Color {
+        if updating {
+            return QuietSafariPalette.sage.opacity(0.85)
+        }
         if !problem.isEmpty || on == false {
             return .orange
         }
         if on == true {
-            return accent
+            return QuietSafariPalette.sage
         }
         return .secondary
     }
 
-    private func label(on: Bool?, problem: String) -> String {
+    private func label(on: Bool?, problem: String, updating: Bool) -> String {
+        if updating {
+            return "обновляется…"
+        }
         if !problem.isEmpty {
             return "ошибка"
         }

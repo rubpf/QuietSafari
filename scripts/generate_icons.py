@@ -80,23 +80,25 @@ def composite(dst, src_rgb, src_a: float):
     return (out[0], out[1], out[2], out[3])
 
 
-def leaf_coverage(px: float, py: float, size: float) -> float:
-    """Tilted almond, the plain leaf from the chosen icon sheet."""
+def leaf_sd(px: float, py: float, size: float) -> float:
+    """Almond leaf. Negative is inside. The tip sits at the upper right, the base at the lower left."""
     dx = px - size * 0.50
     dy = py - size * 0.52
-    cosine = math.cos(0.56)
-    sine = math.sin(0.56)
+    angle = -0.56
+    cosine = math.cos(angle)
+    sine = math.sin(angle)
     local_x = dx * cosine - dy * sine
     local_y = dx * sine + dy * cosine
     radius = size * 0.40
     offset = size * 0.18
     left = math.hypot(local_x + offset, local_y) - radius
     right = math.hypot(local_x - offset, local_y) - radius
-    return coverage(max(left, right))
+    return max(left, right)
 
 
-def render(size: int, monochrome: bool = False) -> list[list[tuple[int, int, int, int]]]:
+def render(size: int, kind: str = "color") -> list[list[tuple[int, int, int, int]]]:
     radius = size * 0.22
+    stroke = max(1.15, size * 0.075)
     rows = []
     for y in range(size):
         row = []
@@ -104,9 +106,14 @@ def render(size: int, monochrome: bool = False) -> list[list[tuple[int, int, int
             px = x + 0.5
             py = y + 0.5
             pixel = (0, 0, 0, 0)
-            if not monochrome:
+            distance = leaf_sd(px, py, size)
+            if kind == "outline":
+                pixel = composite(pixel, INK, coverage(abs(distance) - stroke * 0.5))
+            elif kind == "filled":
+                pixel = composite(pixel, INK, coverage(distance))
+            else:
                 pixel = composite(pixel, GREEN, coverage(sd_round_rect(px, py, size, radius)))
-            pixel = composite(pixel, INK if monochrome else WHITE, leaf_coverage(px, py, size))
+                pixel = composite(pixel, WHITE, coverage(distance))
             row.append(pixel)
         rows.append(row)
     return rows
@@ -130,12 +137,12 @@ def png_bytes(rows: list[list[tuple[int, int, int, int]]]) -> bytes:
 
 def outputs() -> dict[Path, bytes]:
     files: dict[Path, bytes] = {}
-    cache: dict[tuple[int, bool], bytes] = {}
+    cache: dict[tuple[int, str], bytes] = {}
 
-    def png(size: int, monochrome: bool = False) -> bytes:
-        key = (size, monochrome)
+    def png(size: int, kind: str = "color") -> bytes:
+        key = (size, kind)
         if key not in cache:
-            cache[key] = png_bytes(render(size, monochrome))
+            cache[key] = png_bytes(render(size, kind))
         return cache[key]
 
     files[ROOT / "App" / "Assets.xcassets" / "Contents.json"] = contents_json({"info": {"author": "xcode", "version": 1}})
@@ -151,38 +158,55 @@ def outputs() -> dict[Path, bytes]:
             }
         )
     files[APPICON / "Contents.json"] = contents_json({"images": images, "info": {"author": "xcode", "version": 1}})
+    def accent_entry(red: str, green: str, blue: str, luminosity: str) -> dict:
+        return {
+            "appearances": [{"appearance": "luminosity", "value": luminosity}],
+            "color": {
+                "color-space": "srgb",
+                "components": {"alpha": "1.000", "blue": blue, "green": green, "red": red},
+            },
+            "idiom": "universal",
+        }
+
     files[ACCENT / "Contents.json"] = contents_json(
         {
             "colors": [
-                {
-                    "color": {
-                        "color-space": "srgb",
-                        "components": {
-                            "alpha": "1.000",
-                            "blue": "0.267",
-                            "green": "0.431",
-                            "red": "0.071",
-                        },
-                    },
-                    "idiom": "universal",
-                }
+                accent_entry("0.369", "0.478", "0.314", "light"),
+                accent_entry("0.659", "0.769", "0.604", "dark"),
             ],
             "info": {"author": "xcode", "version": 1},
         }
     )
     for pixels in (16, 32, 48, 128):
-        files[IMAGES / f"icon-{pixels}.png"] = png(pixels, monochrome=True)
-    menu = ROOT / "App" / "Assets.xcassets" / "MenuBarIcon.imageset"
-    files[menu / "leaf.png"] = png(18, monochrome=True)
-    files[menu / "leaf@2x.png"] = png(36, monochrome=True)
-    files[menu / "Contents.json"] = contents_json(
+        files[IMAGES / f"icon-{pixels}.png"] = png(pixels, "filled")
+
+    def template_set(folder: str, kind: str) -> None:
+        directory = ROOT / "App" / "Assets.xcassets" / folder
+        files[directory / "leaf.png"] = png(18, kind)
+        files[directory / "leaf@2x.png"] = png(36, kind)
+        files[directory / "Contents.json"] = contents_json(
+            {
+                "images": [
+                    {"filename": "leaf.png", "idiom": "mac", "scale": "1x"},
+                    {"filename": "leaf@2x.png", "idiom": "mac", "scale": "2x"},
+                ],
+                "info": {"author": "xcode", "version": 1},
+                "properties": {"template-rendering-intent": "template"},
+            }
+        )
+
+    template_set("MenuBarIcon.imageset", "filled")
+    template_set("MenuBarIconOutline.imageset", "outline")
+    mark = ROOT / "App" / "Assets.xcassets" / "QuietSafariMark.imageset"
+    files[mark / "mark.png"] = png(40, "color")
+    files[mark / "mark@2x.png"] = png(80, "color")
+    files[mark / "Contents.json"] = contents_json(
         {
             "images": [
-                {"filename": "leaf.png", "idiom": "mac", "scale": "1x"},
-                {"filename": "leaf@2x.png", "idiom": "mac", "scale": "2x"},
+                {"filename": "mark.png", "idiom": "mac", "scale": "1x"},
+                {"filename": "mark@2x.png", "idiom": "mac", "scale": "2x"},
             ],
             "info": {"author": "xcode", "version": 1},
-            "properties": {"template-rendering-intent": "template"},
         }
     )
     return files

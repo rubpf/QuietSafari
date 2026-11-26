@@ -22,6 +22,9 @@ final class SettingsStore: ObservableObject {
     @Published var contentBlockerProblem = ""
     @Published var privacyProblem = ""
     @Published var russianProblem = ""
+    @Published var contentBlockerUpdating = false
+    @Published var privacyUpdating = false
+    @Published var russianUpdating = false
     @Published var webExtensionEnabled: Bool?
     @Published var filterSummary = ""
     @Published var statusMessage = ""
@@ -382,72 +385,140 @@ final class SettingsStore: ObservableObject {
     }
 
     private func reloadBlockers(generation: Int, userInitiated: Bool) {
-        let group = DispatchGroup()
+        contentBlockerProblem = ""
+        privacyProblem = ""
+        russianProblem = ""
+        contentBlockerUpdating = true
+        privacyUpdating = true
+        russianUpdating = true
         let outcome = ReloadOutcome()
-        group.enter()
-        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.contentBlockerBundleID) { error in
-            outcome.ads = error
-            group.leave()
+        let steps = [
+            ReloadStep(keyPath: \.ads, identifier: QuietSafariIdentity.contentBlockerBundleID) {
+                self.contentBlockerUpdating = false
+            },
+            ReloadStep(keyPath: \.privacy, identifier: QuietSafariIdentity.privacyBundleID) {
+                self.privacyUpdating = false
+            },
+            ReloadStep(keyPath: \.russian, identifier: QuietSafariIdentity.russianBundleID) {
+                self.russianUpdating = false
+            },
+        ]
+        // One reload at a time. Safari returns SFErrorDomain error 3 (loading interrupted)
+        // when several content blockers compile at once, even though the previous rules stay active.
+        reloadStep(steps, index: 0, generation: generation, userInitiated: userInitiated, outcome: outcome)
+    }
+
+    private func reloadStep(
+        _ steps: [ReloadStep],
+        index: Int,
+        generation: Int,
+        userInitiated: Bool,
+        outcome: ReloadOutcome
+    ) {
+        guard generation == reloadGeneration else { return }
+        guard index < steps.count else {
+            finishReload(generation: generation, userInitiated: userInitiated, outcome: outcome)
+            return
         }
-        group.enter()
-        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.privacyBundleID) { error in
-            outcome.privacy = error
-            group.leave()
-        }
-        group.enter()
-        SFContentBlockerManager.reloadContentBlocker(withIdentifier: QuietSafariIdentity.russianBundleID) { error in
-            outcome.russian = error
-            group.leave()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 40) { [weak self] in
-            guard let self, generation == self.reloadGeneration, self.isBusy else { return }
-            self.finishReload(generation: generation, userInitiated: userInitiated, outcome: outcome, timedOut: true)
-        }
-        group.notify(queue: .main) {
-            self.finishReload(generation: generation, userInitiated: userInitiated, outcome: outcome, timedOut: false)
+        let step = steps[index]
+        reloadOne(identifier: step.identifier, attempt: 0) { [weak self] error in
+            guard let self, generation == self.reloadGeneration else { return }
+            outcome[keyPath: step.keyPath] = error
+            step.markDone()
+            self.reloadStep(steps, index: index + 1, generation: generation, userInitiated: userInitiated, outcome: outcome)
         }
     }
 
-    private func finishReload(generation: Int, userInitiated: Bool, outcome: ReloadOutcome, timedOut: Bool) {
+    /// Three attempts, then the error (if any) is reported. Interrupted loads wait and try again.
+    private func reloadOne(identifier: String, attempt: Int, completion: @escaping (Error?) -> Void) {
+        let gate = ReloadGate()
+        let timeout = DispatchWorkItem { [weak self] in
+            guard !gate.done else { return }
+            gate.done = true
+            guard let self else { return }
+            if attempt < 2 {
+                self.reloadOne(identifier: identifier, attempt: attempt + 1, completion: completion)
+            } else {
+                completion(Self.interruptedError)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 25, execute: timeout)
+        SFContentBlockerManager.reloadContentBlocker(withIdentifier: identifier) { [weak self] error in
+            DispatchQueue.main.async {
+                guard !gate.done else { return }
+                gate.done = true
+                timeout.cancel()
+                guard let self else { return }
+                if let error, Self.isLoadingInterrupted(error), attempt < 2 {
+                    let delay = 0.5 * pow(2.0, Double(attempt))
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                        self.reloadOne(identifier: identifier, attempt: attempt + 1, completion: completion)
+                    }
+                    return
+                }
+                completion(error)
+            }
+        }
+    }
+
+    private static func isLoadingInterrupted(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == "SFErrorDomain" && nsError.code == 3
+    }
+
+    /// Same code Safari uses when a reload is cancelled because another one is in flight.
+    private static let interruptedError = NSError(domain: "SFErrorDomain", code: 3, userInfo: [
+        NSLocalizedDescriptionKey: "The operation couldn’t be completed. (SFErrorDomain error 3.)",
+    ])
+
+    private func finishReload(generation: Int, userInitiated: Bool, outcome: ReloadOutcome) {
         guard generation == reloadGeneration else { return }
         isBusy = false
-        contentBlockerProblem = outcome.ads?.localizedDescription ?? ""
-        privacyProblem = outcome.privacy?.localizedDescription ?? ""
-        russianProblem = outcome.russian?.localizedDescription ?? ""
-        contentBlockerReloadOK = outcome.ads == nil && !timedOut
-        privacyReloadOK = outcome.privacy == nil && !timedOut
-        russianReloadOK = outcome.russian == nil && !timedOut
-        if timedOut {
-            if outcome.ads == nil { contentBlockerReloadOK = nil }
-            if outcome.privacy == nil { privacyReloadOK = nil }
-            if outcome.russian == nil { russianReloadOK = nil }
-        }
+        contentBlockerUpdating = false
+        privacyUpdating = false
+        russianUpdating = false
+        let ads = Self.classify(outcome.ads)
+        let privacy = Self.classify(outcome.privacy)
+        let russian = Self.classify(outcome.russian)
+        contentBlockerProblem = ads.problem
+        privacyProblem = privacy.problem
+        russianProblem = russian.problem
+        contentBlockerReloadOK = ads.reloadOK
+        privacyReloadOK = privacy.reloadOK
+        russianReloadOK = russian.reloadOK
         refreshExtensionStates()
-        let failures: [(String, Error?)] = [
-            ("QuietSafari Content Blocker", outcome.ads),
-            ("QuietSafari Privacy", outcome.privacy),
-            ("QuietSafari Russian", outcome.russian),
-        ]
-        let lines = failures.compactMap { name, error -> String? in
-            guard let error else { return nil }
-            return "\(name): \(error.localizedDescription)"
-        }
-        if timedOut && lines.isEmpty {
-            if userInitiated {
-                statusMessage = "Safari ещё компилирует правила. Если список отклонён, здесь появится текст ошибки от Safari, а не просьба удалять сборку."
-                statusIsError = true
-            }
-            return
-        }
+        let lines = [
+            ads.problem.isEmpty ? nil : "QuietSafari Content Blocker: \(ads.problem)",
+            privacy.problem.isEmpty ? nil : "QuietSafari Privacy: \(privacy.problem)",
+            russian.problem.isEmpty ? nil : "QuietSafari Russian: \(russian.problem)",
+        ].compactMap { $0 }
         if !lines.isEmpty {
             statusMessage = lines.joined(separator: "\n")
             statusIsError = true
             return
         }
         if userInitiated {
-            statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
-            statusIsError = false
+            if ads.interrupted || privacy.interrupted || russian.interrupted {
+                statusMessage = "Safari прервал обновление. Уже загруженные правила остаются, блокировка не сбрасывается."
+                statusIsError = false
+            } else {
+                statusMessage = "Правила применены. Обновите уже открытые страницы в Safari."
+                statusIsError = false
+            }
         }
+    }
+
+    /// Interrupted reloads are not rule rejections. A missing extension is «выключено», not «ошибка».
+    private static func classify(_ error: Error?) -> (problem: String, reloadOK: Bool?, interrupted: Bool) {
+        guard let error else { return ("", true, false) }
+        let nsError = error as NSError
+        if nsError.domain == "SFErrorDomain" && nsError.code == 3 {
+            return ("", nil, true)
+        }
+        if nsError.domain == "SFErrorDomain" && nsError.code == 1 {
+            return ("", false, false)
+        }
+        return (nsError.localizedDescription, false, false)
     }
 
     private func openInSafari(_ url: URL) {
@@ -469,6 +540,16 @@ private final class ReloadOutcome {
     var ads: Error?
     var privacy: Error?
     var russian: Error?
+}
+
+private struct ReloadStep {
+    let keyPath: ReferenceWritableKeyPath<ReloadOutcome, Error?>
+    let identifier: String
+    let markDone: () -> Void
+}
+
+private final class ReloadGate {
+    var done = false
 }
 
 enum QuietSafariIdentity {

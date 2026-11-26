@@ -25,6 +25,7 @@ final class SettingsStore: ObservableObject {
     @Published var contentBlockerUpdating = false
     @Published var privacyUpdating = false
     @Published var russianUpdating = false
+    @Published var safariResetNotice = false
     @Published var webExtensionEnabled: Bool?
     @Published var filterSummary = ""
     @Published var statusMessage = ""
@@ -229,6 +230,7 @@ final class SettingsStore: ObservableObject {
                     sawAPITrue: &confirmed
                 )
                 self.contentBlockerAPIConfirmed = confirmed
+                self.noteSafariReset()
             }
         }
         SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: privacyID) { state, error in
@@ -241,6 +243,7 @@ final class SettingsStore: ObservableObject {
                     sawAPITrue: &confirmed
                 )
                 self.privacyAPIConfirmed = confirmed
+                self.noteSafariReset()
             }
         }
         SFContentBlockerManager.getStateOfContentBlocker(withIdentifier: russianID) { state, error in
@@ -253,6 +256,7 @@ final class SettingsStore: ObservableObject {
                     sawAPITrue: &confirmed
                 )
                 self.russianAPIConfirmed = confirmed
+                self.noteSafariReset()
             }
         }
         SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionID) { state, _ in
@@ -260,6 +264,7 @@ final class SettingsStore: ObservableObject {
                 if let state {
                     self.webExtensionEnabled = state.isEnabled
                 }
+                self.noteSafariReset()
             }
         }
     }
@@ -321,6 +326,32 @@ final class SettingsStore: ObservableObject {
     func quit() {
         NSApp.terminate(nil)
     }
+
+    func openSafariExtensionSettings() {
+        SFSafariApplication.showPreferencesForExtension(withIdentifier: QuietSafariIdentity.webExtensionBundleID) { error in
+            DispatchQueue.main.async {
+                if let error {
+                    self.statusMessage = "Не удалось открыть настройки Safari: \(error.localizedDescription)"
+                    self.statusIsError = true
+                }
+            }
+        }
+    }
+
+    /// Remember that the extensions were on. After Safari quits, unsigned permission resets and they read as off.
+    private func noteSafariReset() {
+        let blockers = [contentBlockerEnabled, privacyBlockerEnabled, russianBlockerEnabled]
+        let anyOn = webExtensionEnabled == true && blockers.contains(true)
+        if anyOn {
+            UserDefaults.standard.set(true, forKey: Self.extensionsArmedKey)
+        }
+        let armed = UserDefaults.standard.bool(forKey: Self.extensionsArmedKey)
+        let updating = contentBlockerUpdating || privacyUpdating || russianUpdating
+        let turnedOff = webExtensionEnabled == false || blockers.contains(false)
+        safariResetNotice = armed && !updating && webExtensionEnabled != nil && turnedOff
+    }
+
+    private static let extensionsArmedKey = "quietSafari.extensionsArmed"
 
     private func applyDockPolicy() {
         NSApp.setActivationPolicy(hideDockIcon ? .accessory : .regular)

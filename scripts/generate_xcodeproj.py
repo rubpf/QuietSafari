@@ -232,9 +232,11 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "FilterLibrary.swift": file_ref(project, "FilterLibrary.swift", "sourcecode.swift", "App/FilterLibrary.swift"),
         "MenuBar.swift": file_ref(project, "MenuBar.swift", "sourcecode.swift", "App/MenuBar.swift"),
         "QuietSafariPalette.swift": file_ref(project, "QuietSafariPalette.swift", "sourcecode.swift", "App/QuietSafariPalette.swift"),
+        "OnboardingView.swift": file_ref(project, "OnboardingView.swift", "sourcecode.swift", "App/OnboardingView.swift"),
     }
     app_plist = file_ref(project, "Info.plist", "text.plist.xml", "App/Info.plist")
     app_ents = file_ref(project, "QuietSafari.entitlements", "text.plist.entitlements", "App/QuietSafari.entitlements")
+    app_adhoc_ents = file_ref(project, "QuietSafariAdHoc.entitlements", "text.plist.entitlements", "App/QuietSafariAdHoc.entitlements")
     test_page = file_ref(project, "TestPage.html", "text.html", "App/TestPage.html")
     assets = file_ref(project, "Assets.xcassets", "folder.assetcatalog", "App/Assets.xcassets")
 
@@ -251,6 +253,12 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "text.plist.entitlements",
         "ContentBlocker/QuietSafariContentBlocker.entitlements",
     )
+    blocker_adhoc_ents = file_ref(
+        project,
+        "QuietSafariBlockerAdHoc.entitlements",
+        "text.plist.entitlements",
+        "ContentBlocker/QuietSafariBlockerAdHoc.entitlements",
+    )
     privacy_plist = file_ref(project, "Info.plist", "text.plist.xml", "Privacy/Info.plist")
     russian_plist = file_ref(project, "Info.plist", "text.plist.xml", "Russian/Info.plist")
 
@@ -266,6 +274,12 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         "QuietSafariExtension.entitlements",
         "text.plist.entitlements",
         "Extension/QuietSafariExtension.entitlements",
+    )
+    ext_adhoc_ents = file_ref(
+        project,
+        "QuietSafariExtensionAdHoc.entitlements",
+        "text.plist.entitlements",
+        "Extension/QuietSafariExtensionAdHoc.entitlements",
     )
     resource_files = {
         "manifest.json": file_ref(project, "manifest.json", "text.json", "Extension/Resources/manifest.json"),
@@ -394,10 +408,12 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(app_sources["FilterLibrary.swift"], "FilterLibrary.swift"),
             project.ref(app_sources["MenuBar.swift"], "MenuBar.swift"),
             project.ref(app_sources["QuietSafariPalette.swift"], "QuietSafariPalette.swift"),
+            project.ref(app_sources["OnboardingView.swift"], "OnboardingView.swift"),
             project.ref(assets, "Assets.xcassets"),
             project.ref(test_page, "TestPage.html"),
             project.ref(app_plist, "Info.plist"),
             project.ref(app_ents, "QuietSafari.entitlements"),
+            project.ref(app_adhoc_ents, "QuietSafariAdHoc.entitlements"),
         ],
     )
     ext_group = group(
@@ -409,6 +425,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(resources_group, "Resources"),
             project.ref(ext_plist, "Info.plist"),
             project.ref(ext_ents, "QuietSafariExtension.entitlements"),
+            project.ref(ext_adhoc_ents, "QuietSafariExtensionAdHoc.entitlements"),
         ],
     )
     blocker_group = group(
@@ -419,6 +436,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
             project.ref(blocker_source, "ContentBlockerRequestHandler.swift"),
             project.ref(blocker_plist, "Info.plist"),
             project.ref(blocker_ents, "QuietSafariContentBlocker.entitlements"),
+            project.ref(blocker_adhoc_ents, "QuietSafariBlockerAdHoc.entitlements"),
         ],
     )
     privacy_group = group(
@@ -628,7 +646,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
         {
             "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
             "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
-            "CODE_SIGN_ENTITLEMENTS": "App/QuietSafari.entitlements",
+            "CODE_SIGN_ENTITLEMENTS": "$(QUIETSAFARI_APP_ENTITLEMENTS)",
             "COMBINE_HIDPI_IMAGES": True,
             "GENERATE_INFOPLIST_FILE": False,
             "INFOPLIST_FILE": "App/Info.plist",
@@ -642,7 +660,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     ext_debug, ext_release = target_settings(
         {
             "APPLICATION_EXTENSION_API_ONLY": True,
-            "CODE_SIGN_ENTITLEMENTS": "Extension/QuietSafariExtension.entitlements",
+            "CODE_SIGN_ENTITLEMENTS": "$(QUIETSAFARI_EXTENSION_ENTITLEMENTS)",
             "GENERATE_INFOPLIST_FILE": False,
             "INFOPLIST_FILE": "Extension/Info.plist",
             "LD_RUNPATH_SEARCH_PATHS": runpaths_ext,
@@ -656,7 +674,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     blocker_debug, blocker_release = target_settings(
         {
             "APPLICATION_EXTENSION_API_ONLY": True,
-            "CODE_SIGN_ENTITLEMENTS": "ContentBlocker/QuietSafariContentBlocker.entitlements",
+            "CODE_SIGN_ENTITLEMENTS": "$(QUIETSAFARI_BLOCKER_ENTITLEMENTS)",
             "GENERATE_INFOPLIST_FILE": False,
             "INFOPLIST_FILE": "ContentBlocker/Info.plist",
             "LD_RUNPATH_SEARCH_PATHS": runpaths_ext,
@@ -670,7 +688,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     privacy_debug, privacy_release = target_settings(
         {
             "APPLICATION_EXTENSION_API_ONLY": True,
-            "CODE_SIGN_ENTITLEMENTS": "ContentBlocker/QuietSafariContentBlocker.entitlements",
+            "CODE_SIGN_ENTITLEMENTS": "$(QUIETSAFARI_BLOCKER_ENTITLEMENTS)",
             "GENERATE_INFOPLIST_FILE": False,
             "INFOPLIST_FILE": "Privacy/Info.plist",
             "LD_RUNPATH_SEARCH_PATHS": runpaths_ext,
@@ -684,7 +702,7 @@ def render() -> tuple[str, str, str, dict[str, str]]:
     russian_debug, russian_release = target_settings(
         {
             "APPLICATION_EXTENSION_API_ONLY": True,
-            "CODE_SIGN_ENTITLEMENTS": "ContentBlocker/QuietSafariContentBlocker.entitlements",
+            "CODE_SIGN_ENTITLEMENTS": "$(QUIETSAFARI_BLOCKER_ENTITLEMENTS)",
             "GENERATE_INFOPLIST_FILE": False,
             "INFOPLIST_FILE": "Russian/Info.plist",
             "LD_RUNPATH_SEARCH_PATHS": runpaths_ext,

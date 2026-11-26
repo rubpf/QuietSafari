@@ -4,6 +4,8 @@ import SwiftUI
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var store: SettingsStore
+    @AppStorage("quietSafari.didFinishOnboarding") private var didFinishOnboarding = false
+    @State private var showOnboarding = false
     @State private var draft = ""
     @State private var draftMessage = ""
 
@@ -23,7 +25,18 @@ struct ContentView: View {
         }
         .frame(minWidth: 580, minHeight: 720)
         .tint(QuietSafariPalette.sage)
-        .onAppear { store.start() }
+        .onAppear {
+            store.start()
+            if !didFinishOnboarding {
+                showOnboarding = true
+            }
+        }
+        .sheet(isPresented: $showOnboarding, onDismiss: { didFinishOnboarding = true }) {
+            OnboardingView(
+                onOpenSafari: { store.openSafariExtensionSettings() },
+                onDone: { showOnboarding = false }
+            )
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 store.refreshNow()
@@ -179,6 +192,16 @@ struct ContentView: View {
 
     private var helpSection: some View {
         Section {
+            if store.safariResetNotice {
+                Text("Safari сбросил разрешение — включить снова")
+                    .foregroundStyle(.secondary)
+                Button("Открыть настройки Safari") {
+                    store.openSafariExtensionSettings()
+                }
+            }
+            Button("Показать шаги включения") {
+                showOnboarding = true
+            }
             Text(helpText)
                 .font(.callout)
                 .foregroundStyle(.secondary)

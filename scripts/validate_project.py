@@ -260,6 +260,48 @@ def check_plists() -> None:
             fail(f"{relative} app group mismatch: {groups}")
         if data.get("com.apple.security.app-sandbox") is not True:
             fail(f"{relative} is not sandboxed")
+    adhoc = {
+        "App/QuietSafariAdHoc.entitlements": True,
+        "Extension/QuietSafariExtensionAdHoc.entitlements": False,
+        "ContentBlocker/QuietSafariBlockerAdHoc.entitlements": False,
+    }
+    shared_folder = "Library/Application Support/QuietSafari/"
+    for relative, needs_network in adhoc.items():
+        data = plistlib.loads((ROOT / relative).read_bytes())
+        if data.get("com.apple.security.app-sandbox") is not True:
+            fail(f"{relative} is not sandboxed")
+        if "com.apple.security.application-groups" in data:
+            fail(f"{relative} still requires a team app group")
+        paths = data.get("com.apple.security.temporary-exception.files.home-relative-path.read-write")
+        if paths != [shared_folder]:
+            fail(f"{relative} is missing the ad-hoc shared folder")
+        if needs_network and data.get("com.apple.security.network.client") is not True:
+            fail(f"{relative} cannot download filter lists")
+    xcconfig = (ROOT / "Config" / "Shared.xcconfig").read_text(encoding="utf-8")
+    for key in (
+        "QUIETSAFARI_APP_ENTITLEMENTS = App/QuietSafari.entitlements",
+        "QUIETSAFARI_EXTENSION_ENTITLEMENTS = Extension/QuietSafariExtension.entitlements",
+        "QUIETSAFARI_BLOCKER_ENTITLEMENTS = ContentBlocker/QuietSafariContentBlocker.entitlements",
+    ):
+        if key not in xcconfig:
+            fail(f"xcconfig missing {key}")
+    for relative in (
+        ".github/workflows/release.yml",
+        ".github/workflows/pages.yml",
+        "scripts/build_release.sh",
+        "homebrew-tap/Casks/quietsafari.rb",
+        "site/index.html",
+    ):
+        if not (ROOT / relative).exists():
+            fail(f"missing {relative}")
+    release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    for needle in ("macos-latest", "scripts/build_release.sh", "QuietSafari.zip", "v*"):
+        if needle not in release:
+            fail(f"release workflow missing {needle}")
+    build = (ROOT / "scripts/build_release.sh").read_text(encoding="utf-8")
+    for needle in ("CODE_SIGN_IDENTITY=-", "ditto -c -k --keepParent", "shasum -a 256", "QuietSafariAdHoc.entitlements"):
+        if needle not in build:
+            fail(f"release script missing {needle}")
 
 
 def check_identifiers() -> None:

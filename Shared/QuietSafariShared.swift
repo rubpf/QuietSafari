@@ -26,7 +26,20 @@ enum QuietSafariShared {
     }
 
     static var containerURL: URL? {
-        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
+        if let group = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
+            return group
+        }
+        // Ad-hoc releases have no team id, so the App Group container does not exist.
+        // Those builds entitle this folder instead. A Personal Team build hits the group above.
+        let folder = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/QuietSafari", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            return folder
+        } catch {
+            log.error("Shared folder unavailable: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     /// Prefer rules written by the app (allowlist already applied). Fall back to the copy in the bundle.

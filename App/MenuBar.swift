@@ -23,7 +23,7 @@ final class MenuBarController: NSObject {
                 self?.applyStatusIcon(blockingEnabled: enabled)
             }
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 300, height: 420)
+        popover.contentSize = NSSize(width: 300, height: 560)
         popover.contentViewController = NSHostingController(rootView: MenuBarView(store: store))
     }
 
@@ -53,7 +53,27 @@ private struct MenuBarView: View {
     @State private var draft = ""
 
     var body: some View {
+        ScrollView {
+            menuBody
+        }
+        .frame(width: 300)
+    }
+
+    private var menuBody: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if store.safariResetNotice {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Safari сбросил разрешение — включить снова")
+                        .font(.callout)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Открыть настройки Safari") {
+                        store.openSafariExtensionSettings()
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(QuietSafariPalette.sage.opacity(0.22), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
             HStack(spacing: 8) {
                 Image("QuietSafariMark")
                     .resizable()
@@ -102,7 +122,6 @@ private struct MenuBarView: View {
                 .keyboardShortcut("q")
         }
         .padding(14)
-        .frame(width: 300)
         .tint(QuietSafariPalette.sage)
     }
 

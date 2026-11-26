@@ -13,4 +13,8 @@ QUIETSAFARI_RUSSIAN_BUNDLE_ID = $(QUIETSAFARI_BUNDLE_PREFIX).russian
 MARKETING_VERSION = 0.3.0
 CURRENT_PROJECT_VERSION = 1
 
+QUIETSAFARI_APP_ENTITLEMENTS = App/QuietSafari.entitlements
+QUIETSAFARI_EXTENSION_ENTITLEMENTS = Extension/QuietSafariExtension.entitlements
+QUIETSAFARI_BLOCKER_ENTITLEMENTS = ContentBlocker/QuietSafariContentBlocker.entitlements
+
 #include? "Local.xcconfig"

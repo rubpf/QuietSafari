@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>QuietSafari check</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f5;
+      color: #1c1c1e;
+    }
+    main {
+      max-width: 640px;
+      margin: 48px auto;
+      padding: 0 20px 48px;
+    }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .note { color: #3a3a3c; line-height: 1.45; }
+    .ad {
+      display: block;
+      margin: 16px 0;
+      padding: 24px;
+      background: #d92d20;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .keep {
+      margin: 16px 0;
+      padding: 16px;
+      background: #e5f6ec;
+      border-radius: 12px;
+      line-height: 1.45;
+    }
+    .how {
+      margin: -8px 0 16px;
+      color: #3a3a3c;
+      font-size: 14px;
+    }
+    #qs-net, #qs-ext { line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>QuietSafari check</h1>
+    <p class="note">If a red AD block is still visible, blocking is not working yet. The green paragraph should stay.</p>
+
+    <ins class="adsbygoogle ad" id="slot-adsense">AD</ins>
+    <p class="how" id="how-adsense">Checking what hid the first block…</p>
+    <div id="google_ads_iframe_1" class="ad">AD</div>
+    <p class="how" id="how-iframe">Checking what hid the second block…</p>
+    <div id="div-gpt-ad-banner" class="ad">AD</div>
+    <p class="how" id="how-gpt">Checking what hid the third block…</p>
+
+    <p class="keep" id="keep">This paragraph should stay visible. If it is gone, a rule is too broad.</p>
+    <p id="qs-net">Checking whether the ad-network request is blocked…</p>
+    <p id="qs-ext">Checking whether the web extension script ran…</p>
+    <p class="note">This page does not test YouTube. Open youtube.com and play a video.</p>
+  </main>
+  <script>
+    var settled = false;
+    function markNetwork(blocked) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      var line = document.getElementById("qs-net");
+      if (blocked) {
+        line.textContent = "The ad address did not load. That is the content blocker, if you are online.";
+      } else {
+        line.textContent = "The ad script loaded. The Content Blocker network rule did not catch this address.";
+      }
+    }
+    function mechanism(node) {
+      if (!node) {
+        return "block not found";
+      }
+      if (document.documentElement.dataset.qsAllowlisted === "1") {
+        return "still visible: 127.0.0.1 is allowed";
+      }
+      var hidden = getComputedStyle(node).display === "none";
+      if (node.dataset.qsBy === "extension") {
+        return hidden ? "hidden by the web extension" : "marked by the web extension, but still visible";
+      }
+      if (hidden) {
+        return "hidden by the content blocker";
+      }
+      return "still visible";
+    }
+    function reportSlots() {
+      var pairs = [
+        ["slot-adsense", "how-adsense"],
+        ["google_ads_iframe_1", "how-iframe"],
+        ["div-gpt-ad-banner", "how-gpt"]
+      ];
+      for (var i = 0; i < pairs.length; i += 1) {
+        var node = document.getElementById(pairs[i][0]);
+        var line = document.getElementById(pairs[i][1]);
+        if (line) {
+          line.textContent = mechanism(node);
+        }
+      }
+      var ext = document.getElementById("qs-ext");
+      if (!ext) {
+        return;
+      }
+      if (document.documentElement.dataset.qsAllowlisted === "1") {
+        ext.textContent = "The web extension ran and is not hiding blocks: 127.0.0.1 is in the allowlist. Remove it in QuietSafari.";
+      } else if (document.documentElement.dataset.qsCosmeticSeen === "1") {
+        ext.textContent = "The web extension script ran on this page.";
+      } else {
+        ext.textContent = "The web extension script did not run. Check the QuietSafari checkbox and allow it on every website.";
+      }
+    }
+    setTimeout(reportSlots, 400);
+    setTimeout(reportSlots, 1500);
+    setTimeout(reportSlots, 3000);
+    setTimeout(function () { markNetwork(true); }, 8000);
+  </script>
+  <script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" onload="markNetwork(false)" onerror="markNetwork(true)"></script>
+</body>
+</html>

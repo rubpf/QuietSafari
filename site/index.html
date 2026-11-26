@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuietSafari — a quieter Safari</title>
+  <meta name="description" content="An ad blocker for Safari on Mac. YouTube, banners, trackers, and Yandex ads. Nothing leaves this computer.">
+  <link rel="icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="#top"><img src="icon.svg" alt=""> QuietSafari</a>
+    </header>
+
+    <main id="top" class="hero">
+      <div>
+        <p class="lede">For Safari on Mac. Built in Xcode with a free Apple ID.</p>
+        <h1>A quieter<br>Safari.</h1>
+        <p class="lede">Hides banners, trackers, YouTube ads, and Yandex ads on other sites. Yandex search and maps stay put.</p>
+        <div class="actions">
+          <a class="button" href="https://github.com/rubpf/QuietSafari/archive/refs/heads/main.zip">Download</a>
+          <span class="badge">Xcode required</span>
+          <a class="button quiet" href="https://github.com/rubpf/QuietSafari">GitHub</a>
+        </div>
+        <p class="lede">macOS 14 or later. The download is the Xcode project, not an app.</p>
+      </div>
+      <img class="hero-icon" src="icon.svg" alt="QuietSafari icon">
+    </main>
+
+    <section>
+      <h2>What goes quiet</h2>
+      <div class="grid">
+        <article class="card"><strong>YouTube</strong><span>Pre-rolls are stripped from the player response before they start.</span></article>
+        <article class="card"><strong>Banners</strong><span>EasyList hides ordinary display ads and the empty slots they leave.</span></article>
+        <article class="card"><strong>Trackers</strong><span>EasyPrivacy, including Yandex Metrica.</span></article>
+        <article class="card"><strong>Yandex</strong><span>Yandex and Adfox ads on other sites. Not search, and not maps.</span></article>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div>
+        <h2>Three steps</h2>
+        <div class="steps">
+          <article class="step">
+            <div class="num">1</div>
+            <div>
+              <strong>Install Xcode and open the project</strong>
+              <p>Install Xcode from the App Store. Unzip the download and open <code>QuietSafari.xcodeproj</code>.</p>
+            </div>
+          </article>
+          <article class="step">
+            <div class="num">2</div>
+            <div>
+              <strong>Sign with your Apple ID and Run</strong>
+              <p>Set your Personal Team (a free Apple ID) on all 5 targets, then press Run.</p>
+            </div>
+          </article>
+          <article class="step">
+            <div class="num">3</div>
+            <div>
+              <strong>Turn the extensions on</strong>
+              <p>Safari → Settings → Advanced → Show features for web developers. Develop → Allow Unsigned Extensions. Tick the 4 extensions: QuietSafari, Content Blocker, Privacy, and Russian. That toggle turns off every time Safari quits; turn it on again.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <aside class="mock" aria-hidden="true">
+        <header><img src="icon.svg" alt=""> QuietSafari</header>
+        <div class="row"><span>Blocking</span><span class="switch"><i></i></span></div>
+        <div class="row"><span>example.com</span><span>on</span></div>
+        <div class="row"><span><i class="dot"></i>Content Blocker</span><span>on</span></div>
+        <div class="row"><span><i class="dot"></i>Privacy</span><span>on</span></div>
+        <div class="row"><span><i class="dot"></i>Russian</span><span>on</span></div>
+      </aside>
+    </section>
+
+    <section class="faq">
+      <h2>FAQ</h2>
+      <article>
+        <h3>Why do the checkboxes reset?</h3>
+        <p>A free Apple ID build is unsigned as far as Safari is concerned. Safari turns off Allow Unsigned Extensions when it quits. Turn that on again, then tick the four extensions. QuietSafari says the permission was reset and offers a button back to the settings.</p>
+      </article>
+      <article>
+        <h3>Does anything leave this Mac?</h3>
+        <p>No. Rules and settings stay on this computer. Update filters only downloads the public EasyList, EasyPrivacy, and RU AdList files.</p>
+      </article>
+      <article>
+        <h3>Which macOS?</h3>
+        <p>macOS 14 or later. This build does not cover iPhone.</p>
+      </article>
+    </section>
+
+    <footer>
+      <span>QuietSafari</span>
+      <a href="https://github.com/rubpf/QuietSafari">github.com/rubpf/QuietSafari</a>
+    </footer>
+  </div>
+</body>
+</html>
